@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeutschMeister</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a2e;--cream:#f7f3ed;--gold:#c9a84c;--gold-light:#e8c96a;--rust:#b5451b;--sage:#4a7c59;--muted:#7a7a8a;--border:rgba(26,26,46,0.1);--card:#ffffff;--surface:rgba(255,255,255,0.8);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;
+  background-image:radial-gradient(ellipse at 15% 10%,rgba(201,168,76,0.07) 0%,transparent 55%),radial-gradient(ellipse at 85% 90%,rgba(74,124,89,0.05) 0%,transparent 55%);}
+.header{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 2rem;border-bottom:1px solid var(--border);background:rgba(247,243,237,0.95);backdrop-filter:blur(12px);position:sticky;top:0;z-index:200;gap:1rem;}
+.logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;letter-spacing:-0.02em;white-space:nowrap;}
+.logo span{color:var(--gold);}
+.header-right{display:flex;align-items:center;gap:0.6rem;flex-shrink:0;}
+.streak-pill{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--rust);border:1px solid var(--rust);padding:0.2rem 0.55rem;}
+.xp-pill{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--gold);border:1px solid var(--gold);padding:0.2rem 0.65rem;display:flex;align-items:center;gap:0.45rem;cursor:pointer;}
+.xp-bar-mini{width:45px;height:3px;background:rgba(201,168,76,0.2);border-radius:2px;position:relative;}
+.xp-bar-fill{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:2px;transition:width 0.5s ease;}
+.timer-pill{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;border:1px solid var(--border);padding:0.2rem 0.65rem;display:flex;align-items:center;gap:0.35rem;cursor:pointer;transition:all 0.2s;user-select:none;}
+.timer-pill.running{color:var(--sage);border-color:var(--sage);}
+.timer-pill.warning{color:var(--rust);border-color:var(--rust);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.55}}
+.nav{display:flex;gap:0.1rem;flex-wrap:wrap;}
+.nav-btn{font-family:'IBM Plex Sans',sans-serif;font-size:0.7rem;font-weight:500;letter-spacing:0.04em;padding:0.38rem 0.78rem;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all 0.15s;text-transform:uppercase;}
+.nav-btn:hover{color:var(--ink);border-color:var(--border);}
+.nav-btn.active{color:var(--ink);border-color:var(--ink);background:rgba(26,26,46,0.04);}
+.xp-toast{position:fixed;top:4.5rem;right:1.5rem;background:var(--ink);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:0.83rem;padding:0.55rem 1.1rem;border:1px solid var(--gold);z-index:9999;opacity:0;transform:translateY(-8px);transition:all 0.3s;pointer-events:none;}
+.xp-toast.show{opacity:1;transform:translateY(0);}
+canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:9998;}
+.main{padding:1.75rem 2rem;max-width:1100px;margin:0 auto;}
+.screen{display:none;animation:fadeIn 0.3s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+/* SESSION DONE */
+.session-done{position:fixed;inset:0;background:rgba(26,26,46,0.55);z-index:500;display:none;align-items:center;justify-content:center;}
+.session-done.show{display:flex;}
+.sd-card{background:var(--cream);border:1px solid var(--border);padding:2.5rem;max-width:480px;text-align:center;width:100%;}
+.sd-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:700;margin-bottom:0.4rem;}
+.sd-xp{font-family:'IBM Plex Mono',monospace;font-size:1rem;color:var(--gold);margin:1rem 0;}
+.sd-msg{font-size:0.86rem;color:var(--muted);line-height:1.65;margin-bottom:1.5rem;}
+/* HOME */
+.mission-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.4rem;}
+.mission-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;line-height:1.2;}
+.mission-title em{font-style:italic;color:var(--rust);}
+.mission-date{font-family:'IBM Plex Mono',monospace;font-size:0.67rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:0.3rem;}
+.mission-prog-wrap{margin-bottom:1.75rem;}
+.mission-prog-bar{height:7px;background:var(--border);border-radius:4px;overflow:hidden;position:relative;}
+.mission-prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--sage));border-radius:4px;transition:width 0.7s cubic-bezier(0.34,1.56,0.64,1);}
+.mission-prog-label{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);margin-top:0.4rem;text-align:right;}
+.missions-wrap{display:flex;flex-direction:column;gap:0.85rem;margin-bottom:2rem;}
+.mission-card{background:var(--card);border:1px solid var(--border);padding:1.35rem 1.6rem;display:flex;align-items:center;gap:1.25rem;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;border-left:4px solid var(--border);}
+.mission-card:hover{transform:translateX(3px);box-shadow:3px 0 18px rgba(26,26,46,0.07);}
+.mission-card.done{opacity:0.5;cursor:default;border-left-color:var(--sage);}
+.mission-card.next-up{border-left-color:var(--gold);}
+.mission-icon{font-size:1.5rem;flex-shrink:0;width:2.2rem;text-align:center;}
+.mission-info{flex:1;}
+.mission-name{font-weight:600;font-size:0.92rem;margin-bottom:0.2rem;}
+.mission-desc{font-size:0.76rem;color:var(--muted);font-weight:300;}
+.mission-xp{font-family:'IBM Plex Mono',monospace;font-size:0.67rem;color:var(--gold);border:1px solid var(--gold);padding:0.12rem 0.45rem;flex-shrink:0;}
+.mission-check{font-size:1.1rem;flex-shrink:0;opacity:0;transition:opacity 0.3s;}
+.mission-card.done .mission-check{opacity:1;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0.9rem;}
+.stat-card{background:var(--card);border:1px solid var(--border);padding:1.1rem;text-align:center;}
+.stat-num{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;line-height:1;margin-bottom:0.25rem;}
+.stat-num span{font-size:0.85rem;color:var(--gold);}
+.stat-label{font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
+/* STEP DOTS */
+.step-indicator{display:flex;align-items:center;gap:0.45rem;margin-bottom:1.25rem;}
+.step-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all 0.25s;}
+.step-dot.done{background:var(--sage);}
+.step-dot.current{background:var(--gold);transform:scale(1.5);}
+.step-label{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);margin-left:0.35rem;}
+/* BUTTONS */
+.btn{font-family:'IBM Plex Sans',sans-serif;font-size:0.77rem;font-weight:500;letter-spacing:0.06em;padding:0.5rem 1.15rem;border:1px solid var(--ink);background:var(--ink);color:var(--cream);cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.btn:hover{background:transparent;color:var(--ink);}
+.btn.secondary{background:transparent;color:var(--ink);}
+.btn.secondary:hover{background:var(--ink);color:var(--cream);}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:var(--ink);}
+.btn.gold:hover{background:var(--gold-light);border-color:var(--gold-light);}
+.select-styled{font-family:'IBM Plex Sans',sans-serif;font-size:0.78rem;padding:0.45rem 0.9rem;border:1px solid var(--border);background:var(--cream);color:var(--ink);cursor:pointer;}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.6rem;}
+.section-title{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;}
+.section-sub{font-size:0.78rem;color:var(--muted);margin-top:0.25rem;font-weight:300;}
+/* VOCAB */
+.flashcard-arena{display:flex;flex-direction:column;align-items:center;gap:1.4rem;}
+.progress-bar-wrap{width:100%;max-width:560px;display:flex;align-items:center;gap:0.9rem;}
+.progress-bar{flex:1;height:4px;background:var(--border);border-radius:2px;position:relative;}
+.progress-fill{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:2px;transition:width 0.4s ease;}
+.progress-count{font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--muted);}
+.flashcard{width:100%;max-width:560px;height:250px;perspective:1200px;cursor:pointer;}
+.card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);}
+.flashcard.flipped .card-inner{transform:rotateY(180deg);}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;border:1px solid var(--border);background:var(--card);}
+.card-back{transform:rotateY(180deg);background:var(--ink);color:var(--cream);}
+.card-word{font-family:'Playfair Display',serif;font-size:2.3rem;font-weight:700;text-align:center;line-height:1.2;}
+.card-article{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--gold);letter-spacing:0.15em;margin-bottom:0.5rem;text-transform:uppercase;}
+.card-hint{font-size:0.77rem;color:var(--muted);margin-top:0.7rem;font-style:italic;}
+.card-back .card-hint{color:rgba(245,240,232,0.42);}
+.card-translation{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:400;font-style:italic;text-align:center;margin-bottom:0.55rem;color:var(--gold-light);}
+.card-example{font-size:0.82rem;text-align:center;line-height:1.7;opacity:0.78;max-width:370px;}
+.card-example em{color:var(--gold-light);font-style:normal;font-weight:600;}
+.card-actions{display:flex;gap:0.9rem;}
+.flip-hint{font-size:0.73rem;color:var(--muted);font-style:italic;animation:bob 2s infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+/* GRAMMAR */
+.grammar-layout{display:grid;grid-template-columns:205px 1fr;gap:2rem;}
+.grammar-nav{display:flex;flex-direction:column;gap:0.18rem;position:sticky;top:5rem;height:fit-content;}
+.gnav-item{font-size:0.78rem;padding:0.6rem 0.95rem;border:1px solid transparent;cursor:pointer;transition:all 0.15s;color:var(--muted);text-align:left;background:transparent;font-family:'IBM Plex Sans',sans-serif;}
+.gnav-item:hover{color:var(--ink);border-color:var(--border);}
+.gnav-item.active{color:var(--ink);border-color:var(--ink);background:rgba(26,26,46,0.04);font-weight:500;}
+.grammar-content{display:none;}
+.grammar-content.active{display:block;animation:fadeIn 0.3s ease;}
+.grammar-title{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;margin-bottom:0.65rem;}
+.grammar-intro{color:var(--muted);line-height:1.75;font-weight:300;font-size:0.89rem;margin-bottom:1.65rem;max-width:570px;}
+.rule-block{border-left:3px solid var(--gold);padding:1.05rem 1.3rem;background:rgba(201,168,76,0.04);margin-bottom:1.3rem;}
+.rule-title{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;margin-bottom:0.45rem;}
+.rule-text{font-size:0.86rem;line-height:1.7;}
+.rule-text strong{color:var(--rust);}
+.example-table{width:100%;border-collapse:collapse;margin:1.2rem 0;}
+.example-table th{font-family:'IBM Plex Mono',monospace;font-size:0.63rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding:0.5rem 0.85rem;border-bottom:1px solid var(--border);text-align:left;}
+.example-table td{padding:0.6rem 0.85rem;font-size:0.84rem;border-bottom:1px solid var(--border);line-height:1.5;}
+.example-table tr:last-child td{border-bottom:none;}
+.de{font-weight:500;}.de em{color:var(--rust);font-style:normal;}
+/* QUIZ */
+.quiz-wrap{max-width:620px;margin:0 auto;}
+.quiz-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.3rem;}
+.quiz-progress{font-family:'IBM Plex Mono',monospace;font-size:0.76rem;color:var(--muted);}
+.quiz-score-badge{font-family:'IBM Plex Mono',monospace;font-size:0.76rem;color:var(--sage);border:1px solid var(--sage);padding:0.2rem 0.5rem;}
+.quiz-card{background:var(--card);border:1px solid var(--border);padding:1.85rem;margin-bottom:1.1rem;}
+.quiz-type-label{font-family:'IBM Plex Mono',monospace;font-size:0.61rem;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;margin-bottom:0.85rem;}
+.quiz-question{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:400;line-height:1.5;margin-bottom:1.4rem;}
+.quiz-question em{font-style:italic;color:var(--rust);}
+.quiz-options{display:flex;flex-direction:column;gap:0.5rem;}
+.quiz-option{display:flex;align-items:center;gap:0.85rem;padding:0.82rem 1.05rem;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;font-size:0.85rem;background:transparent;text-align:left;color:var(--ink);font-family:'IBM Plex Sans',sans-serif;width:100%;}
+.quiz-option:hover:not(:disabled){border-color:var(--ink);background:rgba(26,26,46,0.02);}
+.quiz-option.correct{border-color:var(--sage);background:rgba(74,124,89,0.07);color:var(--sage);}
+.quiz-option.wrong{border-color:var(--rust);background:rgba(181,69,27,0.05);color:var(--rust);}
+.quiz-option:disabled{cursor:default;}
+.option-key{font-family:'IBM Plex Mono',monospace;font-size:0.66rem;color:var(--muted);min-width:16px;}
+.quiz-feedback{margin-top:1.1rem;padding:1.05rem 1.25rem;border-left:3px solid var(--sage);background:rgba(74,124,89,0.05);display:none;animation:fadeIn 0.3s ease;}
+.quiz-feedback.wrong{border-color:var(--rust);background:rgba(181,69,27,0.04);}
+.quiz-feedback.show{display:block;}
+.feedback-text{font-size:0.83rem;line-height:1.65;}
+.feedback-text strong{color:var(--rust);}
+.quiz-next-wrap{display:flex;justify-content:flex-end;margin-top:1.1rem;}
+.result-screen{text-align:center;padding:3rem 2rem;max-width:440px;margin:0 auto;}
+.result-score{font-family:'Playfair Display',serif;font-size:5rem;font-weight:700;line-height:1;margin:1.1rem 0;}
+.result-label{color:var(--muted);font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;}
+/* READING */
+.reading-layout{display:grid;grid-template-columns:1fr 270px;gap:1.75rem;align-items:start;}
+.reading-meta{display:flex;gap:0.65rem;align-items:center;margin-top:0.55rem;}
+.reading-tag{font-family:'IBM Plex Mono',monospace;font-size:0.61rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.16rem 0.5rem;border:1px solid var(--border);color:var(--muted);}
+.article-text{font-size:0.91rem;line-height:1.9;font-weight:300;}
+.article-text p{margin-bottom:1.1rem;}
+.highlight{background:rgba(201,168,76,0.18);cursor:pointer;padding:0 2px;border-bottom:1px solid var(--gold);transition:background 0.15s;}
+.highlight:hover{background:rgba(201,168,76,0.32);}
+.glossary-panel{background:var(--surface);border:1px solid var(--border);padding:1.3rem;position:sticky;top:5rem;}
+.glossary-title{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;margin-bottom:0.85rem;padding-bottom:0.65rem;border-bottom:1px solid var(--border);}
+.glossary-de{font-weight:600;font-size:0.86rem;margin-bottom:0.18rem;}
+.glossary-en{font-size:0.76rem;color:var(--muted);font-style:italic;}
+.glossary-note{font-size:0.71rem;color:var(--muted);margin-top:0.2rem;line-height:1.55;}
+/* AUDIO */
+.audio-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.6rem;}
+.audio-card{background:var(--card);border:1px solid var(--border);padding:1.4rem;cursor:pointer;transition:all 0.2s;}
+.audio-card:hover{box-shadow:0 5px 20px rgba(26,26,46,0.08);}
+.audio-card.active-track{border-color:var(--gold);}
+.audio-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.85rem;}
+.audio-tag{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);padding:0.12rem 0.42rem;}
+.audio-diff{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;padding:0.12rem 0.42rem;border:1px solid;}
+.audio-diff.b1{color:var(--sage);border-color:var(--sage);}.audio-diff.b2{color:var(--gold);border-color:var(--gold);}
+.audio-diff.c1{color:var(--rust);border-color:var(--rust);}
+.audio-title{font-family:'Playfair Display',serif;font-size:0.98rem;font-weight:700;margin-bottom:0.3rem;}
+.audio-desc{font-size:0.74rem;color:var(--muted);line-height:1.55;font-weight:300;margin-bottom:0.85rem;}
+.audio-meta{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);}
+.audio-player{background:var(--ink);color:var(--cream);padding:1.6rem;margin-bottom:1.6rem;display:none;animation:fadeIn 0.3s ease;}
+.audio-player.visible{display:block;}
+.player-title{font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:0.3rem;}
+.player-meta{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(245,240,232,0.42);margin-bottom:1.2rem;}
+.player-controls{display:flex;align-items:center;gap:0.9rem;margin-bottom:1.3rem;}
+.play-btn{width:42px;height:42px;background:var(--gold);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0;transition:background 0.2s;}
+.play-btn:hover{background:var(--gold-light);}
+.player-timeline{flex:1;}
+.timeline-bar{height:3px;background:rgba(245,240,232,0.15);position:relative;cursor:pointer;margin-bottom:0.38rem;}
+.timeline-fill{position:absolute;left:0;top:0;bottom:0;background:var(--gold);transition:width 0.1s linear;}
+.timeline-times{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:rgba(245,240,232,0.42);}
+.speed-btn{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;background:rgba(245,240,232,0.08);border:1px solid rgba(245,240,232,0.18);color:var(--cream);padding:0.26rem 0.5rem;cursor:pointer;transition:background 0.15s;}
+.speed-btn.active{background:var(--gold);color:var(--ink);border-color:var(--gold);}
+.transcript-box{background:rgba(245,240,232,0.06);border:1px solid rgba(245,240,232,0.1);padding:1.1rem;font-size:0.83rem;line-height:1.85;max-height:130px;overflow-y:auto;color:rgba(245,240,232,0.68);}
+.transcript-box .t-active{color:var(--gold);font-weight:500;}
+.comp-question{background:white;border:1px solid var(--border);padding:1.3rem;margin-bottom:0.85rem;}
+.comp-q-text{font-size:0.88rem;font-weight:500;margin-bottom:0.85rem;line-height:1.5;}
+.comp-options{display:flex;flex-direction:column;gap:0.42rem;}
+.comp-opt{padding:0.62rem 0.95rem;border:1px solid var(--border);cursor:pointer;font-size:0.82rem;background:transparent;text-align:left;color:var(--ink);font-family:'IBM Plex Sans',sans-serif;transition:all 0.15s;width:100%;}
+.comp-opt:hover:not(:disabled){border-color:var(--ink);}
+.comp-opt.correct{border-color:var(--sage);background:rgba(74,124,89,0.07);color:var(--sage);}
+.comp-opt.wrong{border-color:var(--rust);background:rgba(181,69,27,0.05);color:var(--rust);}
+.comp-title{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;margin-bottom:1rem;}
+/* PROGRESS */
+.pd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.9rem;margin-bottom:1.75rem;}
+.pd-card{background:var(--card);border:1px solid var(--border);padding:1.1rem;text-align:center;}
+.pd-num{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;line-height:1;margin-bottom:0.25rem;}
+.pd-label{font-size:0.64rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
+.pd-modules{display:grid;grid-template-columns:repeat(2,1fr);gap:0.9rem;}
+.pd-mod{padding:1.05rem 1.2rem;border:1px solid var(--border);background:var(--card);}
+.pd-mod-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;}
+.pd-mod-name{font-size:0.8rem;font-weight:500;}
+.pd-mod-val{font-family:'IBM Plex Mono',monospace;font-size:0.67rem;color:var(--muted);}
+.pd-mod-bar{height:4px;background:var(--border);border-radius:2px;position:relative;}
+.pd-mod-fill{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:2px;transition:width 0.6s ease;}
+.pd-streak-section{margin-top:1.75rem;}
+.pd-streak-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;margin-bottom:0.9rem;}
+.week-dots{display:flex;gap:0.5rem;}
+.week-dot{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);}
+.week-dot.done{background:var(--sage);border-color:var(--sage);color:white;}
+.week-dot.today{border-color:var(--gold);color:var(--gold);}
+.lvl-B1{color:var(--sage);border-color:var(--sage)!important;}
+.lvl-B2{color:var(--gold);border-color:var(--gold)!important;}
+.lvl-C1{color:var(--rust);border-color:var(--rust)!important;}
+/* CHAT */
+.chat-wrap{max-width:720px;margin:0 auto;}
+.chat-intro{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.85rem;margin-bottom:1.6rem;}
+.prompt-chip{padding:0.85rem 1rem;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;font-size:0.76rem;line-height:1.5;color:var(--muted);background:var(--surface);}
+.prompt-chip:hover{border-color:var(--gold);color:var(--ink);}
+.prompt-chip strong{display:block;font-weight:500;color:var(--ink);margin-bottom:0.22rem;font-size:0.74rem;}
+.chat-messages{min-height:280px;max-height:380px;overflow-y:auto;border:1px solid var(--border);padding:1.2rem;background:var(--card);margin-bottom:0.85rem;display:flex;flex-direction:column;gap:1rem;}
+.msg{display:flex;gap:0.6rem;align-items:flex-start;animation:fadeIn 0.25s ease;}
+.msg.user{flex-direction:row-reverse;}
+.msg-avatar{width:28px;height:28px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--gold);flex-shrink:0;background:var(--cream);}
+.msg-bubble{max-width:80%;padding:0.75rem 0.95rem;border:1px solid var(--border);font-size:0.84rem;line-height:1.65;background:var(--card);}
+.msg.user .msg-bubble{background:var(--ink);color:var(--cream);border-color:var(--ink);}
+.chat-input-row{display:flex;gap:0.6rem;}
+.chat-input{flex:1;padding:0.78rem 0.95rem;border:1px solid var(--border);font-family:'IBM Plex Sans',sans-serif;font-size:0.84rem;background:var(--card);color:var(--ink);outline:none;transition:border-color 0.15s;resize:none;height:46px;}
+.chat-input:focus{border-color:var(--ink);}
+.typing-indicator{display:flex;gap:4px;align-items:center;padding:0.75rem 0.95rem;}
+.typing-dot{width:5px;height:5px;background:var(--muted);border-radius:50%;animation:tb 1s infinite;}
+.typing-dot:nth-child(2){animation-delay:0.15s;}
+.typing-dot:nth-child(3){animation-delay:0.3s;}
+@keyframes tb{0%,60%,100%{transform:translateY(0);opacity:0.5}30%{transform:translateY(-4px);opacity:1}}
+.korr-ex-btn{padding:0.6rem 0.85rem;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:0.76rem;text-align:left;color:var(--muted);font-family:'IBM Plex Sans',sans-serif;transition:all 0.15s;font-style:italic;}
+.korr-ex-btn:hover{border-color:var(--gold);color:var(--ink);}
+@media(max-width:840px){
+  .header{padding:0.8rem 1.2rem;}
+  .main{padding:1.2rem;}
+  .grammar-layout,.reading-layout{grid-template-columns:1fr;}
+  .audio-grid,.pd-grid,.pd-modules,.chat-intro,.stats-row{grid-template-columns:1fr 1fr;}
+  #screen-aussprache>div:first-of-type,#screen-korrektur>div:last-of-type{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<canvas class="confetti" id="confettiCanvas"></canvas>
+<div class="xp-toast" id="xpToast"></div>
+
+<!-- SESSION DONE -->
+<div class="session-done" id="sessionDone">
+  <div class="sd-card">
+    <div style="font-size:2.2rem;margin-bottom:0.6rem">🎉</div>
+    <div class="sd-title">Tagesziel erreicht!</div>
+    <div class="sd-xp" id="sdXP">+0 XP</div>
+    <div class="sd-msg" id="sdMsg"></div>
+    <div id="sdBonus" style="display:none;margin-bottom:1.5rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;margin-bottom:0.75rem;">Noch Energie? Weitermachen:</div>
+      <div id="sdBonusItems" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+    </div>
+    <div style="display:flex;gap:0.65rem;justify-content:center;">
+      <button class="btn gold" onclick="showScreen('home');closeSession()">Zur Übersicht</button>
+    </div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="logo">Deutsch<span>Meister</span></div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showScreen('home')">Heute</button>
+    <button class="nav-btn" onclick="showScreen('vocab')">Vokabeln</button>
+    <button class="nav-btn" onclick="showScreen('grammar')">Grammatik</button>
+    <button class="nav-btn" onclick="showScreen('quiz')">Quiz</button>
+    <button class="nav-btn" onclick="showScreen('reading')">Lesen</button>
+    <button class="nav-btn" onclick="showScreen('hoeren')">Hören</button>
+    <button class="nav-btn" onclick="showScreen('aussprache')">Aussprache</button>
+    <button class="nav-btn" onclick="showScreen('korrektur')">Korrektur</button>
+    <button class="nav-btn" onclick="showScreen('chat')">KI-Chat</button>
+    <button class="nav-btn" onclick="showScreen('fortschritt')">Fortschritt</button>
+  </nav>
+  <div class="header-right">
+    <div class="timer-pill" id="timerPill" onclick="toggleTimer()" title="5-Minuten-Timer starten">⏱ <span id="timerDisplay">5:00</span></div>
+    <div class="streak-pill" id="headerStreak">🔥 1</div>
+    <div class="xp-pill" onclick="showScreen('fortschritt')"><span id="headerXP">0 XP</span><div class="xp-bar-mini"><div class="xp-bar-fill" id="headerXPBar" style="width:0%"></div></div></div>
+  </div>
+</header>
+
+<main class="main">
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="mission-header">
+    <div>
+      <div class="mission-title">Dein Plan<br>für <em>heute.</em></div>
+      <div class="mission-date" id="missionDate"></div>
+    </div>
+    <button class="btn gold" onclick="toggleTimer()">⏱ 5-Min-Session</button>
+  </div>
+  <div class="mission-prog-wrap">
+    <div class="mission-prog-bar"><div class="mission-prog-fill" id="missionFill" style="width:0%"></div></div>
+    <div class="mission-prog-label" id="missionLabel">0 / 3 erledigt</div>
+  </div>
+  <div class="missions-wrap" id="missionsWrap"></div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="homeXP">0<span> XP</span></div><div class="stat-label">Gesamt-XP</div></div>
+    <div class="stat-card"><div class="stat-num" id="homeStreak">1<span>🔥</span></div><div class="stat-label">Tagesstreak</div></div>
+    <div class="stat-card"><div class="stat-num" id="homeCards">0</div><div class="stat-label">Karten geübt</div></div>
+    <div class="stat-card"><div class="stat-num" id="homeQuiz">—</div><div class="stat-label">Quiz-Schnitt</div></div>
+  </div>
+</div>
+
+<!-- VOCAB -->
+<div class="screen" id="screen-vocab">
+  <div class="sec-head">
+    <div><div class="section-title">Vokabeltraining</div><div class="section-sub">Tippe die Karte zum Umdrehen · +2 XP pro Karte</div></div>
+    <div style="display:flex;gap:0.7rem;align-items:center;">
+      <select class="select-styled" id="vocabCategory" onchange="resetVocab()">
+        <optgroup label="── B1 ──">
+          <option value="b1_everyday">B1 · Alltag &amp; Reisen</option>
+          <option value="b1_verbs">B1 · Wichtige Verben</option>
+          <option value="b1_adjectives">B1 · Adjektive</option>
+        </optgroup>
+        <optgroup label="── B2 ──">
+          <option value="b2_advanced">B2 · Fortgeschritten</option>
+          <option value="b2_idioms">B2 · Redewendungen</option>
+        </optgroup>
+        <optgroup label="── C1 ──">
+          <option value="c1_academic">C1 · Akademisch</option>
+          <option value="c1_nuanced">C1 · Nuanciert</option>
+        </optgroup>
+      </select>
+      <button class="btn secondary" onclick="resetVocab()">Mischen</button>
+    </div>
+  </div>
+  <div class="flashcard-arena">
+    <div class="step-indicator" id="vocabSteps"></div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="vocabProgress" style="width:0%"></div></div>
+      <div class="progress-count" id="vocabCount">0 / 0</div>
+    </div>
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="card-inner">
+        <div class="card-face card-front">
+          <div class="card-article" id="cardArticle"></div>
+          <div class="card-word" id="cardWord">Lade...</div>
+          <div class="card-hint" id="cardHint"></div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-translation" id="cardTranslation"></div>
+          <div class="card-example" id="cardExample"></div>
+        </div>
+      </div>
+    </div>
+    <div class="flip-hint" id="flipHint">👆 Antippen zum Umdrehen</div>
+    <div class="card-actions">
+      <button class="btn secondary" onclick="prevCard()">← Zurück</button>
+      <button class="btn gold" onclick="nextCard()">Nächste →</button>
+    </div>
+  </div>
+</div>
+
+<!-- GRAMMAR -->
+<div class="screen" id="screen-grammar">
+  <div class="section-title" style="margin-bottom:1.6rem">Grammatik</div>
+  <div class="grammar-layout">
+    <div class="grammar-nav">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:var(--muted);padding:0.4rem 0.95rem;text-transform:uppercase;">B1</div>
+      <button class="gnav-item active" onclick="showGrammar('kasus',this)">Kasus (Fälle)</button>
+      <button class="gnav-item" onclick="showGrammar('praeteritum',this)">Präteritum</button>
+      <button class="gnav-item" onclick="showGrammar('modalverben',this)">Modalverben</button>
+      <button class="gnav-item" onclick="showGrammar('nebensaetze',this)">Nebensätze</button>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:var(--muted);padding:0.4rem 0.95rem;margin-top:0.5rem;text-transform:uppercase;">B2</div>
+      <button class="gnav-item" onclick="showGrammar('konjunktiv',this)">Konjunktiv II</button>
+      <button class="gnav-item" onclick="showGrammar('genitiv',this)">Genitiv &amp; Präpositionen</button>
+      <button class="gnav-item" onclick="showGrammar('modalpartikeln',this)">Modalpartikeln</button>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:var(--muted);padding:0.4rem 0.95rem;margin-top:0.5rem;text-transform:uppercase;">C1</div>
+      <button class="gnav-item" onclick="showGrammar('partizip',this)">Partizipialkonstruktionen</button>
+      <button class="gnav-item" onclick="showGrammar('negation',this)">Erweiterte Negation</button>
+      <button class="gnav-item" onclick="showGrammar('passiv',this)">Passiv &amp; Alternativen</button>
+    </div>
+    <div>
+      <!-- B1 grammar topics -->
+      <div class="grammar-content active" id="grammar-kasus">
+        <div class="grammar-title">Kasus: Die vier Fälle <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--sage);border:1px solid var(--sage);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">B1</span></div>
+        <p class="grammar-intro">Das Deutsche hat vier Fälle. Jeder Fall zeigt die grammatische Rolle eines Nomens im Satz.</p>
+        <div class="rule-block"><div class="rule-title">Die Artikel nach Fall</div>
+        <table class="example-table" style="margin:0">
+          <tr><th>Fall</th><th>Funktion</th><th>Maskulin</th><th>Feminin</th><th>Neutrum</th><th>Plural</th></tr>
+          <tr><td><strong>Nominativ</strong></td><td>Subjekt</td><td>der</td><td>die</td><td>das</td><td>die</td></tr>
+          <tr><td><strong>Akkusativ</strong></td><td>direktes Objekt</td><td><em>den</em></td><td>die</td><td>das</td><td>die</td></tr>
+          <tr><td><strong>Dativ</strong></td><td>indirektes Objekt</td><td><em>dem</em></td><td><em>der</em></td><td><em>dem</em></td><td><em>den</em></td></tr>
+          <tr><td><strong>Genitiv</strong></td><td>Besitz</td><td><em>des</em></td><td><em>der</em></td><td><em>des</em></td><td><em>der</em></td></tr>
+        </table></div>
+        <div class="rule-block"><div class="rule-title">Akkusativ-Präpositionen</div><div class="rule-text"><strong>durch, für, gegen, ohne, um</strong> — immer Akkusativ.</div></div>
+        <div class="rule-block"><div class="rule-title">Dativ-Präpositionen</div><div class="rule-text"><strong>aus, bei, mit, nach, seit, von, zu, gegenüber, außer</strong> — immer Dativ.</div></div>
+        <table class="example-table">
+          <tr><th>Satz</th><th>Fall</th></tr>
+          <tr><td class="de"><em>Der Mann</em> kauft ein Buch.</td><td>Nominativ (Subjekt)</td></tr>
+          <tr><td class="de">Er kauft <em>den</em> Kaffee.</td><td>Akkusativ (Objekt)</td></tr>
+          <tr><td class="de">Er gibt <em>dem</em> Kind das Buch.</td><td>Dativ (indirektes Objekt)</td></tr>
+          <tr><td class="de">Das ist das Buch <em>des Mannes</em>.</td><td>Genitiv (Besitz)</td></tr>
+        </table>
+      </div>
+      <div class="grammar-content" id="grammar-praeteritum">
+        <div class="grammar-title">Präteritum <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--sage);border:1px solid var(--sage);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">B1</span></div>
+        <p class="grammar-intro">Das Präteritum ist die Vergangenheitsform in der Schriftsprache. Im Alltag wird oft das Perfekt bevorzugt — außer bei sein, haben und den Modalverben.</p>
+        <div class="rule-block"><div class="rule-title">Regelmäßige Verben: Stamm + -te</div><div class="rule-text">machen → ich <strong>machte</strong>, du <strong>machtest</strong>, er <strong>machte</strong>, wir <strong>machten</strong></div></div>
+        <div class="rule-block"><div class="rule-title">Unregelmäßige Verben (Ablaut)</div><div class="rule-text">fahren → <strong>fuhr</strong> · schreiben → <strong>schrieb</strong> · kommen → <strong>kam</strong> · gehen → <strong>ging</strong> · nehmen → <strong>nahm</strong></div></div>
+        <table class="example-table">
+          <tr><th>Infinitiv</th><th>Präteritum (ich)</th><th>Beispiel</th></tr>
+          <tr><td>sein</td><td class="de"><em>war</em></td><td class="de">Ich <em>war</em> gestern müde.</td></tr>
+          <tr><td>haben</td><td class="de"><em>hatte</em></td><td class="de">Sie <em>hatte</em> keine Zeit.</td></tr>
+          <tr><td>gehen</td><td class="de"><em>ging</em></td><td class="de">Wir <em>gingen</em> ins Kino.</td></tr>
+          <tr><td>sagen</td><td class="de"><em>sagte</em></td><td class="de">Er <em>sagte</em> nichts.</td></tr>
+          <tr><td>können</td><td class="de"><em>konnte</em></td><td class="de">Ich <em>konnte</em> nicht schlafen.</td></tr>
+        </table>
+      </div>
+      <div class="grammar-content" id="grammar-modalverben">
+        <div class="grammar-title">Modalverben <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--sage);border:1px solid var(--sage);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">B1</span></div>
+        <p class="grammar-intro">Modalverben verändern die Bedeutung des Hauptverbs. Sie stehen in Position 2, das Hauptverb geht ans Satzende im Infinitiv.</p>
+        <table class="example-table">
+          <tr><th>Verb</th><th>Bedeutung</th><th>Beispiel</th></tr>
+          <tr><td><strong>können</strong></td><td>Fähigkeit / Möglichkeit</td><td class="de">Ich <em>kann</em> gut kochen.</td></tr>
+          <tr><td><strong>müssen</strong></td><td>Notwendigkeit / Pflicht</td><td class="de">Du <em>musst</em> das lernen.</td></tr>
+          <tr><td><strong>wollen</strong></td><td>Wille / Absicht</td><td class="de">Er <em>will</em> Arzt werden.</td></tr>
+          <tr><td><strong>sollen</strong></td><td>Auftrag / Erwartung</td><td class="de">Sie <em>soll</em> um 8 Uhr kommen.</td></tr>
+          <tr><td><strong>dürfen</strong></td><td>Erlaubnis</td><td class="de">Hier <em>darf</em> man nicht rauchen.</td></tr>
+          <tr><td><strong>möchten</strong></td><td>Wunsch (höflich)</td><td class="de">Ich <em>möchte</em> einen Kaffee.</td></tr>
+        </table>
+        <div class="rule-block"><div class="rule-title">Wichtig: müssen ≠ sollen</div><div class="rule-text"><strong>Ich muss gehen</strong> = I have to go (inner necessity). <strong>Ich soll gehen</strong> = I'm supposed to go (someone told me to).</div></div>
+      </div>
+      <div class="grammar-content" id="grammar-nebensaetze">
+        <div class="grammar-title">Nebensätze <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--sage);border:1px solid var(--sage);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">B1</span></div>
+        <p class="grammar-intro">In Nebensätzen geht das konjugierte Verb ans Ende. Sie werden durch Konjunktionen eingeleitet.</p>
+        <div class="rule-block"><div class="rule-title">Verb-letzt-Regel</div><div class="rule-text">Hauptsatz: <strong>Er kommt nicht, weil er krank <em>ist</em>.</strong> Das Verb „ist" steht am Ende des Nebensatzes.</div></div>
+        <table class="example-table">
+          <tr><th>Konjunktion</th><th>Bedeutung</th><th>Beispiel</th></tr>
+          <tr><td><strong>weil</strong></td><td>Grund</td><td class="de">Ich lerne Deutsch, weil ich es <em>brauche</em>.</td></tr>
+          <tr><td><strong>dass</strong></td><td>Inhalt</td><td class="de">Ich weiß, dass du Recht <em>hast</em>.</td></tr>
+          <tr><td><strong>wenn</strong></td><td>Bedingung / Zeit</td><td class="de">Wenn es regnet, bleibe ich zu <em>Hause</em>.</td></tr>
+          <tr><td><strong>obwohl</strong></td><td>Gegensatz</td><td class="de">Obwohl er müde war, arbeitete er <em>weiter</em>.</td></tr>
+          <tr><td><strong>damit</strong></td><td>Zweck</td><td class="de">Ich lerne viel, damit ich die Prüfung <em>bestehe</em>.</td></tr>
+          <tr><td><strong>bevor</strong></td><td>zeitlich (davor)</td><td class="de">Bevor er geht, trinkt er Kaffee.</td></tr>
+        </table>
+      </div>
+      <!-- B2 grammar topics -->
+      <div class="grammar-content" id="grammar-konjunktiv">
+        <div class="grammar-title">Konjunktiv II <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--gold);border:1px solid var(--gold);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">B2</span></div>
+        <p class="grammar-intro">Drückt Irreales, Hypothetisches oder höfliche Bitten aus. Die Wahl zwischen direktem Konjunktiv II und „würde + Infinitiv" ist entscheidend.</p>
+        <div class="rule-block"><div class="rule-title">Bildung</div><div class="rule-text">Starke Verben: Präteritumstamm + Umlaut: <strong>war→wäre, hatte→hätte, kam→käme</strong>. Schwache Verben klingen wie Präteritum → bevorzugt: <strong>würde + Infinitiv</strong>.</div></div>
+        <table class="example-table">
+          <tr><th>Deutsch</th><th>Funktion</th></tr>
+          <tr><td class="de"><em>Wenn</em> ich Zeit <em>hätte</em>, würde ich öfter lesen.</td><td>Irreale Bedingung (Gegenwart)</td></tr>
+          <tr><td class="de">Er <em>wäre</em> früher gekommen, wenn er es gewusst hätte.</td><td>Irreale Bedingung (Vergangenheit)</td></tr>
+          <tr><td class="de"><em>Könnten</em> Sie mir bitte helfen?</td><td>Höfliche Bitte</td></tr>
+          <tr><td class="de">Das <em>dürfte</em> schwierig sein.</td><td>Vorsichtige Vermutung</td></tr>
+        </table>
+        <div class="rule-block"><div class="rule-title">C1-Tipp: Indirekte Rede</div><div class="rule-text">Formell bevorzugt: Konjunktiv I: <strong>Er sagte, er <em>sei</em> krank</strong>. Konjunktiv II nur wenn KI mit Indikativ zusammenfällt.</div></div>
+      </div>
+      <div class="grammar-content" id="grammar-genitiv">
+        <div class="grammar-title">Genitiv &amp; Präpositionen <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--gold);border:1px solid var(--gold);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">B2</span></div>
+        <p class="grammar-intro">Im formellen Schreiben unverzichtbar. Viele Präpositionen verlangen den Genitiv.</p>
+        <div class="rule-block"><div class="rule-title">Genitivpräpositionen</div><div class="rule-text"><strong>aufgrund, wegen, trotz, während, innerhalb, außerhalb, angesichts, mithilfe, infolge, anhand</strong></div></div>
+        <table class="example-table">
+          <tr><th>Präposition</th><th>Beispiel</th></tr>
+          <tr><td><strong>aufgrund</strong></td><td class="de"><em>Aufgrund</em> des schlechten Wetters wurde das Konzert abgesagt.</td></tr>
+          <tr><td><strong>angesichts</strong></td><td class="de"><em>Angesichts</em> der steigenden Preise müssen wir sparen.</td></tr>
+          <tr><td><strong>mithilfe</strong></td><td class="de"><em>Mithilfe</em> moderner Technologie lässt sich das lösen.</td></tr>
+          <tr><td><strong>infolge</strong></td><td class="de"><em>Infolge</em> der Überschwemmungen mussten Tausende evakuiert werden.</td></tr>
+        </table>
+      </div>
+      <div class="grammar-content" id="grammar-modalpartikeln">
+        <div class="grammar-title">Modalpartikeln <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--gold);border:1px solid var(--gold);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">B2</span></div>
+        <p class="grammar-intro">Schwer übersetzbar, aber entscheidend für natürliches Deutsch. Vermitteln Einstellungen des Sprechers.</p>
+        <table class="example-table">
+          <tr><th>Partikel</th><th>Funktion</th><th>Beispiel</th></tr>
+          <tr><td><strong>doch</strong></td><td>Widerspruch, Erinnerung</td><td class="de">Das weißt du <em>doch</em> selbst!</td></tr>
+          <tr><td><strong>ja</strong></td><td>Bestätigung des Bekannten</td><td class="de">Das ist <em>ja</em> interessant.</td></tr>
+          <tr><td><strong>mal</strong></td><td>Auflockerung von Bitten</td><td class="de">Komm <em>mal</em> her.</td></tr>
+          <tr><td><strong>eben/halt</strong></td><td>Resignation</td><td class="de">Das ist <em>eben</em> so.</td></tr>
+          <tr><td><strong>schon</strong></td><td>Zugeständnis</td><td class="de">Das stimmt <em>schon</em>, aber…</td></tr>
+          <tr><td><strong>bloß</strong></td><td>Warnung / Bitte</td><td class="de">Mach das <em>bloß</em> nicht!</td></tr>
+        </table>
+      </div>
+      <!-- C1 grammar topics -->
+      <div class="grammar-content" id="grammar-partizip">
+        <div class="grammar-title">Partizipialkonstruktionen <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--rust);border:1px solid var(--rust);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">C1</span></div>
+        <p class="grammar-intro">Merkmal des gehobenen Schriftdeutsch. Ersetzt Relativsätze – macht den Stil knapper und präziser.</p>
+        <div class="rule-block"><div class="rule-title">Partizip I (aktiv, gleichzeitig)</div><div class="rule-text">Infinitiv + <strong>-d</strong>, attributiv dekliniert: <strong>das schlafende Kind</strong> = das Kind, das schläft.</div></div>
+        <div class="rule-block"><div class="rule-title">Partizip II (passiv / vorzeitig)</div><div class="rule-text">Attributiv: <strong>das gelesene Buch</strong> = das Buch, das gelesen wurde.</div></div>
+        <table class="example-table">
+          <tr><th>Partizipialkonstruktion</th><th>Relativsatz</th></tr>
+          <tr><td class="de">der <em>stark befahrene</em> Autobahnabschnitt</td><td>der Abschnitt, der stark befahren wird</td></tr>
+          <tr><td class="de">die <em>am Montag eingehenden</em> Bewerbungen</td><td>die Bewerbungen, die am Montag eingehen</td></tr>
+          <tr><td class="de">ein <em>nicht zu unterschätzender</em> Faktor</td><td>ein Faktor, der nicht unterschätzt werden darf</td></tr>
+        </table>
+      </div>
+      <div class="grammar-content" id="grammar-negation">
+        <div class="grammar-title">Erweiterte Negation <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--rust);border:1px solid var(--rust);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">C1</span></div>
+        <p class="grammar-intro">Differenziertere Negationsformen jenseits von „nicht" und „kein".</p>
+        <table class="example-table">
+          <tr><th>Ausdruck</th><th>Bedeutung</th><th>Beispiel</th></tr>
+          <tr><td><strong>keineswegs</strong></td><td>überhaupt nicht</td><td class="de">Das ist <em>keineswegs</em> sicher.</td></tr>
+          <tr><td><strong>keinesfalls</strong></td><td>auf gar keinen Fall</td><td class="de"><em>Keinesfalls</em> darf das passieren.</td></tr>
+          <tr><td><strong>nicht einmal</strong></td><td>not even</td><td class="de">Er hat sich <em>nicht einmal</em> bedankt.</td></tr>
+          <tr><td><strong>weder…noch</strong></td><td>neither…nor</td><td class="de"><em>Weder</em> Zeit <em>noch</em> Geld hat er.</td></tr>
+          <tr><td><strong>mitnichten</strong></td><td>not at all (formal)</td><td class="de">Das ist <em>mitnichten</em> bewiesen.</td></tr>
+        </table>
+      </div>
+      <div class="grammar-content" id="grammar-passiv">
+        <div class="grammar-title">Passiv &amp; Alternativen <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--rust);border:1px solid var(--rust);padding:0.1rem 0.4rem;vertical-align:middle;margin-left:0.5rem;">C1</span></div>
+        <p class="grammar-intro">Das Passiv betont den Vorgang, nicht den Handelnden. Auf C1 gibt es elegantere Alternativen zum klassischen Passiv.</p>
+        <div class="rule-block"><div class="rule-title">Werden-Passiv (Vorgangspassiv)</div><div class="rule-text">werden + Partizip II: <strong>Das Buch wird gelesen.</strong> Vergangenheit: <strong>Das Buch wurde gelesen.</strong></div></div>
+        <div class="rule-block"><div class="rule-title">Sein-Passiv (Zustandspassiv)</div><div class="rule-text">sein + Partizip II: <strong>Das Buch ist gelesen.</strong> = Zustand nach einem Vorgang.</div></div>
+        <table class="example-table">
+          <tr><th>Passiv-Alternative</th><th>Beispiel</th></tr>
+          <tr><td><strong>man + Aktiv</strong></td><td class="de"><em>Man liest</em> das Buch viel. (= Das Buch wird viel gelesen.)</td></tr>
+          <tr><td><strong>sich lassen + Infinitiv</strong></td><td class="de">Das <em>lässt sich</em> nicht beweisen. (= Das kann nicht bewiesen werden.)</td></tr>
+          <tr><td><strong>sein + zu + Infinitiv</strong></td><td class="de">Das Problem <em>ist zu lösen</em>. (= Das Problem kann gelöst werden.)</td></tr>
+          <tr><td><strong>Partizip II attributiv</strong></td><td class="de">das <em>gelöste</em> Problem (= das Problem, das gelöst wurde)</td></div></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-wrap" id="quizMain">
+    <div class="quiz-meta">
+      <div class="section-title">Quiz</div>
+      <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+        <select class="select-styled" id="quizLevel" onchange="startQuiz()" style="font-size:0.7rem;padding:0.3rem 0.6rem;">
+          <option value="all">Alle Niveaus</option>
+          <option value="B1">B1</option>
+          <option value="B2">B2</option>
+          <option value="C1">C1</option>
+        </select>
+        <div class="quiz-progress" id="quizProgress">Frage 1 von 8</div>
+        <div class="quiz-score-badge" id="quizScore">✓ 0</div>
+      </div>
+    </div>
+    <div class="step-indicator" id="quizSteps"></div>
+    <div class="quiz-card">
+      <div class="quiz-type-label" id="quizTypeLabel">Grammatik</div>
+      <div class="quiz-question" id="quizQuestion"></div>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="quiz-feedback" id="quizFeedback"><div class="feedback-text" id="quizFeedbackText"></div></div>
+    </div>
+    <div class="quiz-next-wrap"><button class="btn" id="quizNextBtn" onclick="nextQuestion()" style="display:none">Weiter →</button></div>
+  </div>
+  <div class="result-screen" id="quizResult" style="display:none">
+    <div class="result-label">Dein Ergebnis</div>
+    <div class="result-score" id="resultScore"></div>
+    <p style="color:var(--muted);margin-bottom:1.75rem;font-size:0.87rem" id="resultMsg"></p>
+    <button class="btn gold" onclick="startQuiz()">Nochmal</button>
+  </div>
+</div>
+
+<!-- READING -->
+<div class="screen" id="screen-reading">
+  <div style="margin-bottom:1.6rem">
+    <div class="section-title">Leseübung</div>
+    <div class="reading-meta">
+      <span class="reading-tag">Feuilleton</span>
+      <span class="reading-tag">C1</span>
+      <span class="reading-tag" style="color:var(--muted)">ca. 400 Wörter</span>
+    </div>
+  </div>
+  <div class="reading-layout">
+    <div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;margin-bottom:0.4rem;line-height:1.3">Zwischen Effizienz und Entfremdung: Die Digitalisierung der Arbeitswelt</h2>
+      <p style="color:var(--muted);font-size:0.76rem;margin-bottom:1.35rem;font-style:italic">Meinungsartikel · Markierte Wörter anklicken für Erklärungen</p>
+      <div class="article-text">
+        <p>Die Digitalisierung hat die Arbeitswelt in einem <span class="highlight" onclick="showGloss('atemberaubend')">atemberaubenden</span> Tempo verändert. Prozesse, die früher Wochen in Anspruch nahmen, lassen sich heute binnen Stunden abwickeln. Doch hinter der <span class="highlight" onclick="showGloss('fassade')">Fassade</span> dieser scheinbaren Effizienzsteigerung verbirgt sich eine wachsende Ambivalenz: Arbeiten wir mit den Maschinen – oder für sie?</p>
+        <p>Besonders <span class="highlight" onclick="showGloss('ausgepraegt')">ausgeprägt</span> zeigt sich dieses Spannungsfeld in der Wissensarbeit. Die Philosophin Byung-Chul Han spricht von der „Müdigkeitsgesellschaft" – einer Gesellschaft, in der das Individuum nicht mehr von äußerem Zwang, sondern von verinnerlichten <span class="highlight" onclick="showGloss('leistungsimperativen')">Leistungsimperativen</span> erschöpft wird.</p>
+        <p>Gleichzeitig wäre es <span class="highlight" onclick="showGloss('verfehlt')">verfehlt</span>, die Digitalisierung pauschal zu verteufeln. Sie hat Millionen von Menschen Zugang zu Bildung und globalem Austausch ermöglicht, der zuvor schlicht <span class="highlight" onclick="showGloss('undenkbar')">undenkbar</span> war. Gerade in <span class="highlight" onclick="showGloss('einkommensschwach')">einkommensschwachen</span> Regionen kann digitale Infrastruktur den Unterschied zwischen Teilhabe und Ausgrenzung bedeuten.</p>
+        <p>Die <span class="highlight" onclick="showGloss('eigentliche')">eigentliche</span> Frage lautet: Unter welchen Bedingungen wird diese Entwicklung gestaltet? Eine Technologie, die ausschließlich Profitlogiken folgt, wird zur <span class="highlight" onclick="showGloss('entfremdung')">Entfremdung</span> beitragen. Eine, die den Menschen ins Zentrum stellt, könnte neue Formen der Selbstverwirklichung ermöglichen.</p>
+        <p>Am Ende steht eine <span class="highlight" onclick="showGloss('genuin')">genuin</span> politische Frage: Wer entscheidet, wie wir arbeiten? Solange dies allein den Marktkräften überlassen bleibt, wird die Digitalisierung weniger eine Befreiung als eine subtile Disziplinierung sein.</p>
+      </div>
+    </div>
+    <div class="glossary-panel">
+      <div class="glossary-title">Wortglossar</div>
+      <div id="glossaryContent"><p style="font-size:0.78rem;color:var(--muted);font-style:italic">Klicke auf ein markiertes Wort im Text.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- HÖREN -->
+<div class="screen" id="screen-hoeren">
+  <div class="sec-head">
+    <div><div class="section-title">Hörverständnis</div><div class="section-sub">Simuliertes Audio mit Transcript · +15 XP pro bestandenem Test</div></div>
+    <div style="display:flex;gap:0.6rem;">
+      <select class="select-styled" id="audioLevelFilter" onchange="renderAudioGrid()">
+        <option value="all">Alle Niveaus</option>
+        <option value="B1">B1</option>
+        <option value="B2">B2</option>
+        <option value="C1">C1</option>
+      </select>
+    </div>
+  </div>
+  <div class="audio-grid" id="audioGrid"></div>
+  <div class="audio-player" id="audioPlayer">
+    <div class="player-title" id="playerTitle">—</div>
+    <div class="player-meta" id="playerMeta">—</div>
+    <div class="player-controls">
+      <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+      <div class="player-timeline">
+        <div class="timeline-bar" onclick="seekAudio(event)"><div class="timeline-fill" id="timelineFill" style="width:0%"></div></div>
+        <div class="timeline-times"><span id="timeCurrent">0:00</span><span id="timeDuration">0:00</span></div>
+      </div>
+      <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
+      <button class="speed-btn" onclick="setSpeed(0.75,this)">0.75×</button>
+    </div>
+    <div class="transcript-box" id="transcriptBox"></div>
+  </div>
+  <div id="compSection" style="display:none">
+    <div class="comp-title">Verständnisfragen</div>
+    <div id="compQuestions"></div>
+    <button class="btn gold" id="compSubmitBtn" onclick="submitComp()">Auswerten</button>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="screen" id="screen-chat">
+  <div class="chat-wrap">
+    <div style="margin-bottom:1.6rem"><div class="section-title">KI-Konversation</div><div class="section-sub">Chatte auf Deutsch mit Claude · Korrekturen und C1-Tipps inklusive</div></div>
+    <div class="chat-intro" id="chatIntro">
+      <div class="prompt-chip" onclick="usePrompt('Kannst du mir helfen, meinen Schreibstil zu verbessern? Ich schreibe: „Ich habe das Buch gelesen und es war sehr interessant."')"><strong>✍️ Schreibstil</strong>Lass deinen Text auf C1 umformulieren</div>
+      <div class="prompt-chip" onclick="usePrompt('Erkläre mir den Unterschied zwischen „obwohl" und „trotzdem" mit C1-Beispielen.')"><strong>📐 Grammatik</strong>Lass einen Grammatikpunkt erläutern</div>
+      <div class="prompt-chip" onclick="usePrompt('Starte eine Diskussion über KI und Gesellschaft auf B2/C1-Niveau.')"><strong>💬 Gespräch</strong>Diskutiere über aktuelle Themen</div>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg"><div class="msg-avatar">DM</div><div class="msg-bubble">Hallo! Ich bin dein KI-Deutschlehrer. Womit möchtest du heute üben?</div></div>
+    </div>
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chatInput" placeholder="Schreibe auf Deutsch…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+      <button class="btn" onclick="sendChat()">Senden</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORTSCHRITT -->
+<div class="screen" id="screen-fortschritt">
+  <div class="sec-head">
+    <div><div class="section-title">Fortschritt</div><div class="section-sub">Deine Lernstatistiken im Überblick</div></div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.67rem;color:var(--gold);border:1px solid var(--gold);padding:0.2rem 0.55rem;">B2 / C1</div>
+  </div>
+  <div class="pd-grid">
+    <div class="pd-card"><div class="pd-num" id="pdXP">0</div><div class="pd-label">Gesamt XP</div></div>
+    <div class="pd-card"><div class="pd-num" id="pdStreak">1<span style="font-size:0.9rem">🔥</span></div><div class="pd-label">Tagesstreak</div></div>
+    <div class="pd-card"><div class="pd-num" id="pdCards">0</div><div class="pd-label">Karten geübt</div></div>
+    <div class="pd-card"><div class="pd-num" id="pdQuiz">—</div><div class="pd-label">Quiz-Schnitt %</div></div>
+  </div>
+  <div class="pd-modules">
+    <div class="pd-mod"><div class="pd-mod-head"><div class="pd-mod-name">🗂️ Vokabeln</div><div class="pd-mod-val" id="pdVocabVal">0 Karten</div></div><div class="pd-mod-bar"><div class="pd-mod-fill" id="pdVocabBar" style="width:0%"></div></div></div>
+    <div class="pd-mod"><div class="pd-mod-head"><div class="pd-mod-name">🎯 Quiz</div><div class="pd-mod-val" id="pdQuizVal">0 gespielt</div></div><div class="pd-mod-bar"><div class="pd-mod-fill" id="pdQuizBar" style="width:0%"></div></div></div>
+    <div class="pd-mod"><div class="pd-mod-head"><div class="pd-mod-name">🎧 Hören</div><div class="pd-mod-val" id="pdAudioVal">0 / 4</div></div><div class="pd-mod-bar"><div class="pd-mod-fill" id="pdAudioBar" style="width:0%"></div></div></div>
+    <div class="pd-mod"><div class="pd-mod-head"><div class="pd-mod-name">🤖 KI-Chat</div><div class="pd-mod-val" id="pdChatVal">0 Nachrichten</div></div><div class="pd-mod-bar"><div class="pd-mod-fill" id="pdChatBar" style="width:0%"></div></div></div>
+  </div>
+  <div class="pd-streak-section">
+    <div class="pd-streak-title">Diese Woche</div>
+    <div class="week-dots" id="weekDots"></div>
+  </div>
+
+  <!-- BACKUP -->
+  <div style="margin-top:2.5rem;border-top:1px solid var(--border);padding-top:2rem;">
+    <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;margin-bottom:0.35rem;">Daten sichern</div>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem;line-height:1.65;max-width:520px;">Dein Fortschritt wird automatisch im Browser gespeichert. Exportiere zusätzlich eine Backup-Datei für andere Geräte.</p>
+    <div id="autosaveStatus" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--sage);margin-bottom:1.1rem;"></div>
+    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+      <button class="btn gold" onclick="exportData()">⬇ Backup exportieren</button>
+      <label class="btn secondary" style="cursor:pointer;">
+        ⬆ Backup importieren
+        <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+      </label>
+      <button class="btn secondary" style="color:var(--rust);border-color:var(--rust);" onclick="resetAllData()">✕ Alles zurücksetzen</button>
+    </div>
+    <div id="importMsg" style="margin-top:0.85rem;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;display:none;padding:0.6rem 0.9rem;border-left:3px solid var(--sage);background:rgba(74,124,89,0.06);"></div>
+  </div>
+</div>
+
+<!-- AUSSPRACHE -->
+<div class="screen" id="screen-aussprache">
+  <div class="sec-head">
+    <div><div class="section-title">Aussprache</div><div class="section-sub">Regeln · IPA-Hinweise · KI-Aussprachecoach</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;">
+    <!-- Rules panel -->
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;margin-bottom:1rem;">Ausspracheregeln</div>
+      <div class="rule-block"><div class="rule-title">Umlaute</div><div class="rule-text">
+        <strong>ä</strong> [ɛ] wie „e" in „Bett" · <strong>ö</strong> [ø] Lippen runden, „e" sagen · <strong>ü</strong> [y] Lippen runden, „i" sagen<br>
+        Beispiele: <em>Mädchen, schön, über</em>
+      </div></div>
+      <div class="rule-block"><div class="rule-title">ch – zwei Laute</div><div class="rule-text">
+        Nach a/o/u/au: <strong>ach-Laut</strong> [x] – wie schnarchen: <em>Bach, Buch, auch</em><br>
+        Nach e/i/ä/ö/ü/ei: <strong>ich-Laut</strong> [ç] – weich: <em>ich, nicht, Mädchen</em>
+      </div></div>
+      <div class="rule-block"><div class="rule-title">Konsonanten</div><div class="rule-text">
+        <strong>v</strong> = [f] meist: <em>Vogel, Vater, viel</em><br>
+        <strong>w</strong> = [v]: <em>Wasser, wollen, Welt</em><br>
+        <strong>z</strong> = [ts]: <em>Zeit, Zug, Herz</em><br>
+        <strong>sp/st</strong> am Wortanfang = [ʃp/ʃt]: <em>spielen, Straße</em>
+      </div></div>
+      <div class="rule-block"><div class="rule-title">Vokale: lang vs. kurz</div><div class="rule-text">
+        Lang vor einem Konsonanten: <em>le-ben, sa-gen, Bo-den</em><br>
+        Kurz vor Doppelkonsonant: <em>bett-en, satt, offen</em>
+      </div></div>
+      <div class="rule-block"><div class="rule-title">Auslautverhärtung</div><div class="rule-text">
+        Stimmhafte Konsonanten (b/d/g) am Wortende werden stimmlos:<br>
+        <em>Hund</em> → [hʊnt] · <em>Weg</em> → [veːk] · <em>Grab</em> → [ɡraːp]
+      </div></div>
+      <div class="rule-block"><div class="rule-title">Betonung</div><div class="rule-text">
+        Grundregel: Betonung auf der <strong>ersten Silbe</strong> (Wortstamm):<br>
+        <em><u>Haus</u>, <u>ler</u>nen, <u>kom</u>men</em><br>
+        Ausnahme: Fremdwörter oft auf letzter Silbe: <em>Mu<u>se</u>um, Uni<u>ver</u>sität</em>
+      </div></div>
+    </div>
+    <!-- AI coach panel -->
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">KI-Aussprachecoach</div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Gib ein Wort oder einen Satz ein. Der Coach erklärt dir, wie man es ausspricht – mit IPA, Silbentrennung und Tipps für typische Fehler.</p>
+      <div style="display:flex;gap:0.6rem;margin-bottom:0.75rem;">
+        <input id="pronInput" type="text" placeholder="z.B. Streichholzschächtelchen" style="flex:1;padding:0.75rem 1rem;border:1px solid var(--border);font-family:'IBM Plex Sans',sans-serif;font-size:0.86rem;background:var(--card);color:var(--ink);outline:none;" onkeydown="if(event.key==='Enter')checkPron()">
+        <button class="btn gold" onclick="checkPron()">Analysieren</button>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;" id="pronChips"></div>
+      <div id="pronResult" style="border:1px solid var(--border);padding:1.25rem;background:var(--card);min-height:120px;font-size:0.86rem;line-height:1.75;display:none;"></div>
+      <div id="pronLoading" style="display:none;padding:1.25rem;border:1px solid var(--border);background:var(--card);">
+        <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+      </div>
+    </div>
+  </div>
+  <!-- Tricky words section -->
+  <div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;margin-bottom:0.9rem;">Häufige Ausspracheprobleme</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;">
+      <div style="background:var(--card);border:1px solid var(--border);padding:1rem;cursor:pointer;" onclick="quickPron(this)" data-word="Eichhörnchen">
+        <div style="font-weight:600;font-size:0.9rem;">Eichhörnchen</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">squirrel</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);padding:1rem;cursor:pointer;" onclick="quickPron(this)" data-word="Streichholzschächtelchen">
+        <div style="font-weight:600;font-size:0.9rem;">Streichholzschächtelchen</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">little matchbox</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);padding:1rem;cursor:pointer;" onclick="quickPron(this)" data-word="Donaudampfschifffahrtsgesellschaft">
+        <div style="font-weight:600;font-size:0.9rem;">Donaudampfschiff…</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">Danube steamship company</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);padding:1rem;cursor:pointer;" onclick="quickPron(this)" data-word="Ich möchte bitte die Rechnung">
+        <div style="font-weight:600;font-size:0.9rem;">Ich möchte die Rechnung</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">I'd like the bill</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);padding:1rem;cursor:pointer;" onclick="quickPron(this)" data-word="Entschuldigung">
+        <div style="font-weight:600;font-size:0.9rem;">Entschuldigung</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">excuse me / sorry</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);padding:1rem;cursor:pointer;" onclick="quickPron(this)" data-word="gleichzeitig">
+        <div style="font-weight:600;font-size:0.9rem;">gleichzeitig</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">simultaneous</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);padding:1rem;cursor:pointer;" onclick="quickPron(this)" data-word="Verhältnismäßigkeit">
+        <div style="font-weight:600;font-size:0.9rem;">Verhältnismäßigkeit</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">proportionality</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);padding:1rem;cursor:pointer;" onclick="quickPron(this)" data-word="Jahrtausendwende">
+        <div style="font-weight:600;font-size:0.9rem;">Jahrtausendwende</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">turn of the millennium</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KORREKTUR -->
+<div class="screen" id="screen-korrektur">
+  <div class="sec-head">
+    <div><div class="section-title">Fehlerkorrektur</div><div class="section-sub">Schreibe oder füge deutschen Text ein — der KI-Lehrer korrigiert und erklärt</div></div>
+    <select class="select-styled" id="korrLevel">
+      <option value="B1">B1 – einfache Erklärungen</option>
+      <option value="B2" selected>B2 – detaillierte Erklärungen</option>
+      <option value="C1">C1 – präzise linguistische Analyse</option>
+    </select>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:0.5rem;">Dein Text</div>
+      <textarea id="korrInput" placeholder="Schreibe hier deinen deutschen Text ein…&#10;&#10;z.B. Gestern ich bin gegangen zum Supermarkt und habe gekauft Milch und Brot weil ich hatte Hunger." style="width:100%;height:220px;padding:1rem;border:1px solid var(--border);font-family:'IBM Plex Sans',sans-serif;font-size:0.86rem;line-height:1.7;background:var(--card);color:var(--ink);resize:vertical;outline:none;"></textarea>
+      <div style="display:flex;gap:0.6rem;margin-top:0.75rem;flex-wrap:wrap;">
+        <button class="btn gold" onclick="runKorrektur()">✓ Text korrigieren</button>
+        <button class="btn secondary" onclick="document.getElementById('korrInput').value='';document.getElementById('korrResult').style.display='none'">Leeren</button>
+      </div>
+      <div style="margin-top:1rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.63rem;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:0.6rem;">Schnellübungen</div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;" id="korrExamples">
+          <button class="korr-ex-btn" onclick="loadKorrExample(0)">„Ich bin 25 Jahre alt und lebe in München seit drei Jahren."</button>
+          <button class="korr-ex-btn" onclick="loadKorrExample(1)">„Gestern ich habe gegessen ein großes Pizza mit meine Freunde."</button>
+          <button class="korr-ex-btn" onclick="loadKorrExample(2)">„Obwohl das Wetter war schlecht, wir sind gegangen spazieren."</button>
+          <button class="korr-ex-btn" onclick="loadKorrExample(3)">„Er hat mir gesagt dass er kommt nicht morgen wegen er ist krank."</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:0.5rem;">Korrektur &amp; Erklärung</div>
+      <div id="korrLoading" style="display:none;padding:1.5rem;border:1px solid var(--border);background:var(--card);">
+        <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+      </div>
+      <div id="korrResult" style="display:none;border:1px solid var(--border);background:var(--card);padding:1.25rem;font-size:0.86rem;line-height:1.75;min-height:220px;max-height:520px;overflow-y:auto;"></div>
+      <div id="korrEmpty" style="border:1px solid var(--border);background:var(--card);padding:2rem;text-align:center;color:var(--muted);font-size:0.82rem;min-height:220px;display:flex;align-items:center;justify-content:center;">
+        <div>Gib deinen Text links ein und klicke<br>„Text korrigieren" →</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── STATE ───────────────────────────────────────────────
+const S={xp:0,streak:1,cardsReviewed:0,cardsSeen:new Set(),quizScores:[],audioCompleted:0,chatMessages:0,missionsToday:[],missionsDone:new Set(),sessionXP:0};
+
+// ── NAV ─────────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick')?.includes("'"+id+"'")));
+  if(id==='vocab')resetVocab();
+  if(id==='quiz')startQuiz();
+  if(id==='home')renderMissions();
+  if(id==='hoeren')renderAudioGrid();
+  if(id==='aussprache')initPronChips();
+  updateUI();
+}
+
+// ── XP / UI ─────────────────────────────────────────────
+function awardXP(n,label){S.xp+=n;S.sessionXP+=n;showToast(n,label);updateUI();saveState();}
+function showToast(n,label){const t=document.getElementById('xpToast');t.textContent='+'+n+' XP · '+label;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+function updateUI(){
+  const avg=S.quizScores.length?Math.round(S.quizScores.reduce((a,b)=>a+b,0)/S.quizScores.length):null;
+  const xpLvl=200;
+  document.getElementById('headerXP').textContent=S.xp+' XP';
+  document.getElementById('headerXPBar').style.width=Math.min((S.xp%xpLvl)/xpLvl*100,100)+'%';
+  document.getElementById('headerStreak').textContent='🔥 '+S.streak;
+  ['homeXP'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=S.xp+'<span> XP</span>';});
+  ['homeStreak'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=S.streak+'<span>🔥</span>';});
+  ['homeCards','pdCards'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.cardsReviewed;});
+  ['homeQuiz','pdQuiz'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=avg!==null?avg+'%':'—';});
+  ['pdXP'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=S.xp;});
+  ['pdStreak'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=S.streak+'<span style="font-size:0.9rem">🔥</span>';});
+  const pv=document.getElementById('pdVocabVal');if(pv)pv.textContent=S.cardsReviewed+' Karten';
+  const pvb=document.getElementById('pdVocabBar');if(pvb)pvb.style.width=Math.min(S.cardsReviewed/20*100,100)+'%';
+  const pqv=document.getElementById('pdQuizVal');if(pqv)pqv.textContent=S.quizScores.length+' gespielt';
+  const pqb=document.getElementById('pdQuizBar');if(pqb)pqb.style.width=(avg||0)+'%';
+  const pav=document.getElementById('pdAudioVal');if(pav)pav.textContent=S.audioCompleted+' / '+AD.length;
+  const pab=document.getElementById('pdAudioBar');if(pab)pab.style.width=Math.min(S.audioCompleted/AD.length*100,100)+'%';
+  const pcv=document.getElementById('pdChatVal');if(pcv)pcv.textContent=S.chatMessages+' Nachrichten';
+  const pcb=document.getElementById('pdChatBar');if(pcb)pcb.style.width=Math.min(S.chatMessages/10*100,100)+'%';
+  renderWeek();
+}
+function renderWeek(){
+  const wd=document.getElementById('weekDots');if(!wd)return;
+  const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
+  const today=new Date().getDay();const ti=today===0?6:today-1;
+  wd.innerHTML=days.map((d,i)=>`<div class="week-dot ${i<ti?'done':i===ti?'today':''}">${d}</div>`).join('');
+}
+
+// ── MISSIONS ────────────────────────────────────────────
+const MP=[
+  {id:'vocab5',icon:'🗂️',name:'5 Vokabelkarten',desc:'Drehe 5 Karten um',xp:10,screen:'vocab'},
+  {id:'quiz1',icon:'🎯',name:'Quiz spielen',desc:'Schließe eine Quiz-Runde ab',xp:15,screen:'quiz'},
+  {id:'read',icon:'📰',name:'Artikel lesen',desc:'Klicke ein markiertes Wort an',xp:8,screen:'reading'},
+  {id:'hoer',icon:'🎧',name:'Hörtext öffnen',desc:'Öffne einen Hörtext',xp:15,screen:'hoeren'},
+  {id:'chat1',icon:'🤖',name:'KI-Gespräch',desc:'Schreibe 3 Nachrichten',xp:12,screen:'chat'},
+  {id:'grammar',icon:'📐',name:'Grammatik',desc:'Klicke ein Grammatikthema an',xp:5,screen:'grammar'},
+  {id:'korrektur',icon:'✍️',name:'Text korrigieren',desc:'Lass einen Text korrigieren',xp:8,screen:'korrektur'},
+  {id:'aussprache',icon:'🗣️',name:'Aussprache üben',desc:'Analysiere ein Wort oder Satz',xp:5,screen:'aussprache'},
+];
+function buildMissions(){
+  let h=0;for(let c of new Date().toDateString())h=Math.imul(31,h)+c.charCodeAt(0)|0;
+  const sh=[...MP].sort(()=>{h=Math.imul(h^(h>>>16),0x45d9f3b);return(h>>>0)%2-0.5;});
+  S.missionsToday=sh.slice(0,3);
+}
+function renderMissions(){
+  const d=document.getElementById('missionDate');
+  if(d)d.textContent=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
+  if(!S.missionsToday.length)buildMissions();
+  const wrap=document.getElementById('missionsWrap');if(!wrap)return;
+  const done=S.missionsDone.size;
+  document.getElementById('missionFill').style.width=(done/3*100)+'%';
+  document.getElementById('missionLabel').textContent=done+' / 3 erledigt';
+  wrap.innerHTML=S.missionsToday.map((m,i)=>{
+    const isDone=S.missionsDone.has(m.id);
+    return`<div class="mission-card ${isDone?'done':i===done?'next-up':''}" onclick="${isDone?'':' autoCheckMission(\''+m.id+'\');'}showScreen('${m.screen}')">
+      <div class="mission-icon">${m.icon}</div>
+      <div class="mission-info"><div class="mission-name">${m.name}</div><div class="mission-desc">${m.desc}</div></div>
+      <div class="mission-xp">+${m.xp} XP</div>
+      <div class="mission-check">✅</div>
+    </div>`;
+  }).join('');
+}
+function autoCheckMission(id){
+  if(S.missionsDone.has(id))return;
+  const m=S.missionsToday.find(x=>x.id===id);if(!m)return;
+  S.missionsDone.add(id);awardXP(m.xp,m.name);renderMissions();
+  if(S.missionsDone.size===3){setTimeout(launchConfetti,300);setTimeout(showSessionDone,700);}
+}
+
+// ── TIMER ───────────────────────────────────────────────
+let timerSec=300,timerRun=false,timerInt=null;
+function toggleTimer(){
+  timerRun=!timerRun;
+  const pill=document.getElementById('timerPill');
+  if(timerRun){pill.classList.add('running');timerInt=setInterval(tickTimer,1000);}
+  else{pill.classList.remove('running','warning');clearInterval(timerInt);}
+}
+function tickTimer(){
+  timerSec--;
+  if(timerSec<=0){timerSec=0;timerRun=false;clearInterval(timerInt);launchConfetti();showSessionDone();}
+  const pill=document.getElementById('timerPill');
+  if(timerSec<=60){pill.classList.remove('running');pill.classList.add('warning');}
+  document.getElementById('timerDisplay').textContent=fmt(timerSec);
+}
+function fmt(s){return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');}
+
+// ── SESSION DONE ─────────────────────────────────────────
+const BONUS_SUGGESTIONS=[
+  {icon:'🗂️',label:'Noch eine Kartendeck-Runde',desc:'Probiere die akademischen Vokabeln',screen:'vocab',xp:'+2 XP / Karte'},
+  {icon:'🎯',label:'Quiz nochmal spielen',desc:'Kannst du deinen Score verbessern?',screen:'quiz',xp:'+10 XP / Richtig'},
+  {icon:'🎧',label:'Zweiten Hörtext anhören',desc:'Wähle einen anderen Beitrag',screen:'hoeren',xp:'+15 XP'},
+  {icon:'📰',label:'Artikel zu Ende lesen',desc:'Alle markierten Wörter erkunden',screen:'reading',xp:'+8 XP'},
+  {icon:'🤖',label:'Freies Gespräch üben',desc:'Schreibe 5 Sätze über ein Thema',screen:'chat',xp:'+12 XP'},
+  {icon:'📐',label:'Grammatikthema vertiefen',desc:'Lies ein weiteres Grammatikthema',screen:'grammar',xp:'+5 XP'},
+];
+function showSessionDone(){
+  document.getElementById('sdXP').textContent='+'+S.sessionXP+' XP';
+  const msgs=['Tagesziel erreicht! 🌟','Drei von drei – perfekt!','Alle Aufgaben erledigt!'];
+  document.getElementById('sdMsg').textContent=msgs[Math.floor(Math.random()*msgs.length)];
+  // Pick 3 bonus suggestions, skipping already-done missions
+  const doneMissionScreens=S.missionsToday.filter(m=>S.missionsDone.has(m.id)).map(m=>m.screen);
+  const pool=BONUS_SUGGESTIONS.filter(b=>!doneMissionScreens.includes(b.screen));
+  const picks=pool.sort(()=>Math.random()-.5).slice(0,3);
+  const bonusEl=document.getElementById('sdBonus');
+  const itemsEl=document.getElementById('sdBonusItems');
+  if(picks.length>0){
+    bonusEl.style.display='block';
+    itemsEl.innerHTML=picks.map(b=>`
+      <button onclick="showScreen('${b.screen}');closeSession()" style="display:flex;align-items:center;gap:0.9rem;padding:0.75rem 1rem;border:1px solid var(--border);background:white;cursor:pointer;text-align:left;width:100%;transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:1.3rem;flex-shrink:0">${b.icon}</span>
+        <span style="flex:1">
+          <span style="display:block;font-size:0.84rem;font-weight:500;color:var(--ink)">${b.label}</span>
+          <span style="display:block;font-size:0.72rem;color:var(--muted);margin-top:0.1rem">${b.desc}</span>
+        </span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--gold);border:1px solid var(--gold);padding:0.12rem 0.4rem;flex-shrink:0">${b.xp}</span>
+      </button>`).join('');
+  } else {
+    bonusEl.style.display='none';
+  }
+  document.getElementById('sessionDone').classList.add('show');
+  S.sessionXP=0;
+}
+function closeSession(){document.getElementById('sessionDone').classList.remove('show');}
+
+// ── CONFETTI ─────────────────────────────────────────────
+function launchConfetti(){
+  const cv=document.getElementById('confettiCanvas'),ctx=cv.getContext('2d');
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const P=Array.from({length:100},()=>({x:Math.random()*cv.width,y:-10,vx:(Math.random()-.5)*4,vy:Math.random()*4+2,color:['#c9a84c','#e8c96a','#4a7c59','#b5451b','#1a1a2e'][Math.floor(Math.random()*5)],size:Math.random()*8+3,rot:Math.random()*360,rv:(Math.random()-.5)*8}));
+  let f=0;
+  function draw(){ctx.clearRect(0,0,cv.width,cv.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.rv;p.vy+=0.05;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.color;ctx.fillRect(-p.size/2,-p.size/4,p.size,p.size/2);ctx.restore();});f++;if(f<130)requestAnimationFrame(draw);else ctx.clearRect(0,0,cv.width,cv.height);}
+  draw();
+}
+
+// ── STEP DOTS ─────────────────────────────────────────────
+function renderSteps(id,total,cur){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=Array.from({length:Math.min(total,10)},(_,i)=>`<div class="step-dot ${i<cur?'done':i===cur?'current':''}"></div>`).join('')+`<span class="step-label">${cur+1} / ${total}</span>`;
+}
+
+// ── VOCAB ─────────────────────────────────────────────────
+const VD={
+  b1_everyday:[
+    {article:'die',word:'Unterkunft',hint:'Substantiv · B1',translation:'accommodation',example:'Wir suchen eine günstige <em>Unterkunft</em> für drei Nächte.'},
+    {article:'der',word:'Aufenthalt',hint:'Substantiv · B1',translation:'stay, sojourn',example:'Mein <em>Aufenthalt</em> in Wien hat mir sehr gut gefallen.'},
+    {article:'',word:'sich beschweren',hint:'Verb (reflexiv) · B1',translation:'to complain',example:'Er hat sich über den Lärm <em>beschwert</em>.'},
+    {article:'',word:'genehmigen',hint:'Verb · B1',translation:'to approve, to grant',example:'Das Visum wurde <em>genehmigt</em>.'},
+    {article:'die',word:'Verabredung',hint:'Substantiv · B1',translation:'appointment, date (casual)',example:'Ich habe eine <em>Verabredung</em> mit meiner Freundin.'},
+    {article:'',word:'verschieben',hint:'Verb · B1',translation:'to postpone, to move (date)',example:'Können wir das Treffen auf Donnerstag <em>verschieben</em>?'},
+    {article:'die',word:'Rückerstattung',hint:'Substantiv · B1',translation:'refund, reimbursement',example:'Ich möchte eine <em>Rückerstattung</em> für den defekten Artikel.'},
+    {article:'',word:'bescheinigen',hint:'Verb · B1',translation:'to certify, confirm in writing',example:'Bitte <em>bescheinigen</em> Sie den Eingang der Unterlagen.'},
+    {article:'die',word:'Überweisung',hint:'Substantiv · B1',translation:'bank transfer; referral',example:'Ich habe die Miete per <em>Überweisung</em> bezahlt.'},
+    {article:'',word:'sich anmelden',hint:'Verb (reflexiv) · B1',translation:'to register, sign up',example:'Ich muss mich beim Einwohnermeldeamt <em>anmelden</em>.'},
+  ],
+  b1_verbs:[
+    {article:'',word:'sich vorstellen',hint:'Verb (reflexiv) · B1',translation:'to introduce oneself / to imagine',example:'Kannst du dir <em>vorstellen</em>, in Deutschland zu leben?'},
+    {article:'',word:'verbessern',hint:'Verb · B1',translation:'to improve',example:'Ich möchte mein Deutsch <em>verbessern</em>.'},
+    {article:'',word:'erledigen',hint:'Verb · B1',translation:'to take care of, to get done',example:'Ich muss noch einige Aufgaben <em>erledigen</em>.'},
+    {article:'',word:'überzeugen',hint:'Verb · B1',translation:'to convince, to persuade',example:'Er hat mich mit seinen Argumenten <em>überzeugt</em>.'},
+    {article:'',word:'beantragen',hint:'Verb · B1',translation:'to apply for, to request formally',example:'Sie hat ein Stipendium <em>beantragt</em>.'},
+    {article:'',word:'berücksichtigen',hint:'Verb · B1',translation:'to consider, to take into account',example:'Bitte <em>berücksichtigen</em> Sie alle Kosten.'},
+    {article:'',word:'sich entscheiden',hint:'Verb (reflexiv) · B1',translation:'to decide',example:'Ich habe mich für den zweiten Kurs <em>entschieden</em>.'},
+    {article:'',word:'vergleichen',hint:'Verb · B1',translation:'to compare',example:'Wir sollten die Angebote <em>vergleichen</em>.'},
+    {article:'',word:'ablehnen',hint:'Verb · B1 (trennbar)',translation:'to reject, to decline',example:'Er hat das Angebot <em>abgelehnt</em>.'},
+    {article:'',word:'ermöglichen',hint:'Verb · B1',translation:'to make possible, to enable',example:'Das Stipendium hat mir das Studium <em>ermöglicht</em>.'},
+  ],
+  b1_adjectives:[
+    {article:'',word:'zuverlässig',hint:'Adjektiv · B1',translation:'reliable, dependable',example:'Sie ist eine sehr <em>zuverlässige</em> Mitarbeiterin.'},
+    {article:'',word:'gründlich',hint:'Adjektiv · B1',translation:'thorough, meticulous',example:'Er hat die Aufgabe <em>gründlich</em> bearbeitet.'},
+    {article:'',word:'selbstständig',hint:'Adjektiv · B1',translation:'independent, autonomous',example:'Kinder sollten <em>selbstständig</em> denken lernen.'},
+    {article:'',word:'ausreichend',hint:'Adjektiv/Adverb · B1',translation:'sufficient, adequate',example:'Die Vorbereitung war nicht <em>ausreichend</em>.'},
+    {article:'',word:'entsprechend',hint:'Adjektiv/Präp. · B1',translation:'corresponding, accordingly',example:'Bitte handle <em>entsprechend</em> den Regeln.'},
+    {article:'',word:'nachhaltig',hint:'Adjektiv · B1',translation:'sustainable; lasting',example:'Wir brauchen eine <em>nachhaltige</em> Lösung.'},
+    {article:'',word:'gesellschaftlich',hint:'Adjektiv · B1',translation:'social, societal',example:'Das ist ein wichtiges <em>gesellschaftliches</em> Thema.'},
+    {article:'',word:'erheblich',hint:'Adjektiv/Adverb · B1',translation:'considerable, significant',example:'Die Kosten sind <em>erheblich</em> gestiegen.'},
+  ],
+  b2_advanced:[
+    {article:'das',word:'Scheitern',hint:'Substantiv · B2',translation:'failure, failing',example:'Das <em>Scheitern</em> des Projekts war für alle eine Lektion.'},
+    {article:'die',word:'Ambivalenz',hint:'Substantiv · B2',translation:'ambivalence',example:'Er betrachtete die Lage mit tiefer <em>Ambivalenz</em>.'},
+    {article:'',word:'vermeintlich',hint:'Adjektiv/Adverb · B2',translation:'supposed(ly), alleged(ly)',example:'Der <em>vermeintlich</em> einfache Test entpuppte sich als schwierig.'},
+    {article:'',word:'etw. in Frage stellen',hint:'Redewendung · B2',translation:'to call sth. into question',example:'Diese Ergebnisse <em>stellen</em> die Theorie <em>in Frage</em>.'},
+    {article:'',word:'ungeachtet',hint:'Präp. + Genitiv · B2',translation:'regardless of',example:'<em>Ungeachtet</em> der Risiken beschloss er weiterzumachen.'},
+    {article:'die',word:'Wechselwirkung',hint:'Substantiv · B2',translation:'interaction, mutual effect',example:'Die <em>Wechselwirkung</em> zwischen Ernährung und Psyche ist komplex.'},
+    {article:'',word:'infolgedessen',hint:'Konjunktionaladverb · B2',translation:'as a result, consequently',example:'Die Fabrik schloss. <em>Infolgedessen</em> verloren 200 Menschen ihren Job.'},
+    {article:'',word:'einräumen',hint:'Verb · B2',translation:'to concede, to grant',example:'Er räumte ein, dass er einen Fehler gemacht hatte.'},
+  ],
+  b2_idioms:[
+    {article:'',word:'auf dem Laufenden bleiben',hint:'Redewendung · B2',translation:'to stay up-to-date',example:'Es ist wichtig, <em>auf dem Laufenden</em> zu bleiben.'},
+    {article:'',word:'etwas auf den Punkt bringen',hint:'Redewendung · B2',translation:'to get to the point',example:'Sie brachte das Problem <em>auf den Punkt</em>.'},
+    {article:'',word:'unter vier Augen',hint:'Redewendung · B2',translation:'in private',example:'Das besprechen wir besser <em>unter vier Augen</em>.'},
+    {article:'',word:'jdm. auf den Zahn fühlen',hint:'Redewendung · B2',translation:'to probe / grill sb.',example:'Der Journalist fühlte dem Minister <em>auf den Zahn</em>.'},
+    {article:'',word:'ins Schwarze treffen',hint:'Redewendung · B2',translation:'to hit the nail on the head',example:'Mit seiner Analyse traf er <em>ins Schwarze</em>.'},
+    {article:'',word:'die Flinte ins Korn werfen',hint:'Redewendung · B2',translation:'to throw in the towel',example:'Wirf jetzt nicht <em>die Flinte ins Korn</em>.'},
+    {article:'',word:'den Faden verlieren',hint:'Redewendung · B2',translation:'to lose the thread (of thought)',example:'Mitten im Vortrag verlor er <em>den Faden</em>.'},
+    {article:'',word:'über den Tellerrand schauen',hint:'Redewendung · B2',translation:'to think outside the box',example:'Wir müssen <em>über den Tellerrand schauen</em>.'},
+  ],
+  c1_academic:[
+    {article:'',word:'sich auseinandersetzen mit',hint:'Verb (reflexiv) · C1',translation:'to engage with critically',example:'Der Autor <em>setzt sich</em> mit den ethischen Fragen <em>auseinander</em>.'},
+    {article:'',word:'im Hinblick auf',hint:'Präpositionalausdruck · C1',translation:'with regard to',example:'<em>Im Hinblick auf</em> die Daten ist Vorsicht geboten.'},
+    {article:'die',word:'Auseinandersetzung',hint:'Substantiv · C1',translation:'confrontation; critical engagement',example:'Eine kritische <em>Auseinandersetzung</em> ist notwendig.'},
+    {article:'',word:'demzufolge',hint:'Konjunktionaladverb · C1',translation:'therefore, consequently',example:'Die Daten sind lückenhaft; <em>demzufolge</em> sind die Schlüsse vorläufig.'},
+    {article:'',word:'maßgeblich',hint:'Adjektiv/Adverb · C1',translation:'decisive, significantly',example:'Diese Studie hat <em>maßgeblich</em> zur Forschung beigetragen.'},
+    {article:'',word:'wenngleich',hint:'Konjunktion · C1',translation:'even though (formal)',example:'<em>Wenngleich</em> die Methode umstritten ist, liefert sie Ergebnisse.'},
+    {article:'',word:'indes / indessen',hint:'Konjunktionaladverb · C1',translation:'meanwhile; however (formal)',example:'Die Zahlen stiegen; <em>indes</em> blieb die Stimmung gedrückt.'},
+    {article:'',word:'nichtsdestotrotz',hint:'Adverb · C1',translation:'nevertheless, nonetheless',example:'Es gab Hindernisse. <em>Nichtsdestotrotz</em> wurde das Projekt abgeschlossen.'},
+  ],
+  c1_nuanced:[
+    {article:'die',word:'Stringenz',hint:'Substantiv · C1',translation:'rigour, logical consistency',example:'Die <em>Stringenz</em> seiner Argumentation war beeindruckend.'},
+    {article:'die',word:'Ambiguität',hint:'Substantiv · C1',translation:'ambiguity',example:'Die <em>Ambiguität</em> des Textes macht ihn schwer interpretierbar.'},
+    {article:'',word:'kontraproduktiv',hint:'Adjektiv · C1',translation:'counterproductive',example:'Dieses Vorgehen ist <em>kontraproduktiv</em>.'},
+    {article:'',word:'substanziell',hint:'Adjektiv · C1',translation:'substantial, meaningful',example:'Es fehlen <em>substanzielle</em> Belege für diese These.'},
+    {article:'die',word:'Prämisse',hint:'Substantiv · C1',translation:'premise, assumption',example:'Die <em>Prämisse</em> des Arguments ist falsch.'},
+    {article:'',word:'implizieren',hint:'Verb · C1',translation:'to imply',example:'Diese Aussage <em>impliziert</em>, dass alle schuldig sind.'},
+    {article:'',word:'relativieren',hint:'Verb · C1',translation:'to put in perspective, to qualify',example:'Man sollte diese Ergebnisse <em>relativieren</em>.'},
+    {article:'die',word:'Diskrepanz',hint:'Substantiv · C1',translation:'discrepancy, gap',example:'Es gibt eine große <em>Diskrepanz</em> zwischen Anspruch und Wirklichkeit.'},
+  ]
+};
+let deck=[],idx=0,vFlipped=0;
+function resetVocab(){const cat=document.getElementById('vocabCategory')?.value||'b1_everyday';deck=[...VD[cat]].sort(()=>Math.random()-.5);idx=0;vFlipped=0;document.getElementById('flashcard').classList.remove('flipped');const fh=document.getElementById('flipHint');if(fh)fh.style.display='block';loadCard();}
+function loadCard(){const c=deck[idx];document.getElementById('cardArticle').textContent=c.article||'';document.getElementById('cardWord').textContent=c.word;document.getElementById('cardHint').textContent=c.hint;document.getElementById('cardTranslation').textContent=c.translation;document.getElementById('cardExample').innerHTML=c.example;document.getElementById('flashcard').classList.remove('flipped');document.getElementById('vocabProgress').style.width=((idx+1)/deck.length*100)+'%';document.getElementById('vocabCount').textContent=(idx+1)+' / '+deck.length;renderSteps('vocabSteps',Math.min(deck.length,8),Math.min(idx,7));}
+function flipCard(){
+  document.getElementById('flashcard').classList.toggle('flipped');
+  const fh=document.getElementById('flipHint');if(fh)fh.style.display='none';
+  const k=deck[idx].word;
+  if(!S.cardsSeen.has(k)){S.cardsSeen.add(k);S.cardsReviewed++;awardXP(2,'Karte');vFlipped++;if(vFlipped>=5){autoCheckMission('vocab5');launchConfetti();}updateUI();}
+}
+function nextCard(){if(idx<deck.length-1){idx++;loadCard();}}
+function prevCard(){if(idx>0){idx--;loadCard();}}
+
+// ── GRAMMAR ───────────────────────────────────────────────
+function showGrammar(id,btn){
+  document.querySelectorAll('.grammar-content').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.gnav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('grammar-'+id).classList.add('active');
+  btn.classList.add('active');
+  autoCheckMission('grammar');
+}
+
+// ── QUIZ ──────────────────────────────────────────────────
+const QB=[
+  // B1
+  {level:'B1',type:'Grammatik',q:'Welcher Artikel ist korrekt? „Ich gebe ___ Mann das Buch."',opts:['der','den','dem','des'],ans:2,exp:'<strong>dem</strong> = Dativ maskulin. „geben" verlangt ein indirektes Objekt im Dativ.'},
+  {level:'B1',type:'Grammatik',q:'Welche Verbform ist korrekt? „Gestern ___ ich ins Kino gegangen."',opts:['bin','habe','war','hatte'],ans:0,exp:'<strong>bin gegangen</strong> = Perfekt mit Hilfsverb „sein". Bewegungsverben bilden Perfekt mit sein.'},
+  {level:'B1',type:'Grammatik',q:'Welcher Nebensatz ist korrekt?',opts:['Ich lerne Deutsch, weil ich es brauche.','Ich lerne Deutsch, weil ich brauche es.','Ich lerne Deutsch, weil es ich brauche.','Ich lerne Deutsch, ich brauche es weil.'],ans:0,exp:'Im Nebensatz steht das Verb am Ende: <strong>weil ich es brauche</strong>.'},
+  {level:'B1',type:'Modalverben',q:'Welcher Satz drückt eine Erlaubnis aus?',opts:['Du musst hier parken.','Du sollst hier parken.','Du darfst hier parken.','Du willst hier parken.'],ans:2,exp:'<strong>dürfen</strong> = Erlaubnis. „musst" = Pflicht, „sollst" = Auftrag, „willst" = Wille.'},
+  {level:'B1',type:'Wortschatz',q:'Was bedeutet „zuverlässig"?',opts:['langsam','verlässlich / dependable','launisch','laut'],ans:1,exp:'<strong>Zuverlässig</strong> = man kann sich darauf verlassen. Englisch: reliable, dependable.'},
+  {level:'B1',type:'Grammatik',q:'Welche Präposition verlangt immer den Dativ?',opts:['für','durch','mit','gegen'],ans:2,exp:'<strong>mit</strong> ist eine Dativpräposition. „für", „durch", „gegen" verlangen Akkusativ.'},
+  // B2
+  {level:'B2',type:'Grammatik',q:'Welche Form ist korrekt? „Wenn er mehr Zeit ___, würde er mehr lesen."',opts:['hat','hätte','haben','gehabt hätte'],ans:1,exp:'<strong>hätte</strong> = Konjunktiv II von „haben". Irreale Gegenwartsbedingungen verlangen Konjunktiv II.'},
+  {level:'B2',type:'Wortschatz',q:'Was bedeutet „ungeachtet"?',opts:['wegen','trotz','unabhängig von / ohne Rücksicht auf','anstatt'],ans:2,exp:'<strong>Ungeachtet</strong> = „ohne Rücksicht auf". Es verlangt den Genitiv.'},
+  {level:'B2',type:'Modalpartikeln',q:'Welche Partikel passt? „Das weißt du ___ selbst!"',opts:['mal','eben','doch','schon'],ans:2,exp:'<strong>Doch</strong> drückt Ungeduld / Erinnerung aus – häufigste Modalpartikel.'},
+  {level:'B2',type:'Wortschatz',q:'Was bedeutet „etw. auf den Punkt bringen"?',opts:['etw. kritisieren','etw. klar und präzise ausdrücken','etw. beenden','etw. übertreiben'],ans:1,exp:'<strong>Auf den Punkt bringen</strong> = präzise ausdrücken. Englisch: to get to the point.'},
+  {level:'B2',type:'Grammatik',q:'Welche Genitivpräposition passt? „___ des schlechten Wetters blieben wir zu Hause."',opts:['Während','Trotz','Aufgrund','Obwohl'],ans:2,exp:'<strong>Aufgrund</strong> ist eine Genitivpräposition. „Obwohl" ist eine Konjunktion, keine Präposition.'},
+  // C1
+  {level:'C1',type:'Grammatik',q:'Welcher Satz verwendet eine korrekte Partizipialkonstruktion?',opts:['Der Mann, der lacht, ist glücklich.','Der lachende Mann ist glücklich.','Der Mann ist glücklich lachend.','Der Mann lachend ist glücklich.'],ans:1,exp:'<strong>Der lachende Mann</strong> = Partizip I (lachen+d), attributiv dekliniert.'},
+  {level:'C1',type:'Wortschatz',q:'Was bedeutet „wenngleich"?',opts:['falls','obwohl (formell)','wenn auch nicht','solange'],ans:1,exp:'<strong>Wenngleich</strong> = formelles Synonym für „obwohl". Konzessiver Nebensatz.'},
+  {level:'C1',type:'Grammatik',q:'Welches Wort drückt die stärkste Verneinung aus?',opts:['kaum','nicht unbedingt','keineswegs','eigentlich nicht'],ans:2,exp:'<strong>Keineswegs</strong> = „absolut nicht / in keinster Weise". Formell und stark betont.'},
+  {level:'C1',type:'Passiv',q:'Welche Passiv-Alternative ist korrekt für „Das kann nicht bewiesen werden"?',opts:['Das beweist man nicht.','Das lässt sich nicht beweisen.','Das ist nicht bewiesen werden.','Das wird nicht beweisen lassen.'],ans:1,exp:'<strong>sich lassen + Infinitiv</strong> ist eine elegante Passiv-Alternative: „Das lässt sich nicht beweisen."'},
+];
+let qQ=[],qIdx=0,qScore=0,qAns=false;
+function startQuiz(){
+  const lvl=document.getElementById('quizLevel')?.value||'all';
+  const pool=lvl==='all'?QB:QB.filter(q=>q.level===lvl);
+  qQ=pool.sort(()=>Math.random()-.5).slice(0,8);
+  qIdx=0;qScore=0;qAns=false;
+  document.getElementById('quizMain').style.display='block';
+  document.getElementById('quizResult').style.display='none';
+  loadQ();
+}
+function loadQ(){const q=qQ[qIdx];qAns=false;document.getElementById('quizProgress').textContent='Frage '+(qIdx+1)+' von '+qQ.length;document.getElementById('quizScore').textContent='✓ '+qScore;document.getElementById('quizTypeLabel').innerHTML=q.type+' <span style="font-size:0.58rem;border:1px solid;padding:0.1rem 0.35rem;margin-left:0.3rem;"class="lvl-'+q.level+'">'+q.level+'</span>';document.getElementById('quizQuestion').innerHTML=q.q;document.getElementById('quizFeedback').className='quiz-feedback';document.getElementById('quizNextBtn').style.display='none';renderSteps('quizSteps',qQ.length,qIdx);const oc=document.getElementById('quizOptions');oc.innerHTML='';['A','B','C','D'].forEach((k,i)=>{const b=document.createElement('button');b.className='quiz-option';b.innerHTML='<span class="option-key">'+k+'</span>'+q.opts[i];b.onclick=()=>selQ(i);oc.appendChild(b);});}
+function selQ(i){if(qAns)return;qAns=true;const q=qQ[qIdx];document.querySelectorAll('.quiz-option').forEach((b,j)=>{b.disabled=true;if(j===q.ans)b.classList.add('correct');else if(j===i)b.classList.add('wrong');});const ok=i===q.ans;if(ok){qScore++;awardXP(10,'Richtig!');}document.getElementById('quizFeedback').className='quiz-feedback show'+(ok?'':' wrong');document.getElementById('quizFeedbackText').innerHTML=q.exp;document.getElementById('quizScore').textContent='✓ '+qScore;document.getElementById('quizNextBtn').style.display='block';}
+function nextQuestion(){qIdx++;if(qIdx>=qQ.length)finishQuiz();else loadQ();}
+function finishQuiz(){document.getElementById('quizMain').style.display='none';document.getElementById('quizResult').style.display='block';const p=Math.round((qScore/qQ.length)*100);S.quizScores.push(p);document.getElementById('resultScore').textContent=qScore+'/'+qQ.length;document.getElementById('resultMsg').textContent=p<50?'Noch etwas Übung nötig!':p<70?'Solide! Weiter so.':p<88?'Sehr gut!':'Ausgezeichnet! Eindeutig C1.';if(p>=60){launchConfetti();autoCheckMission('quiz1');}updateUI();}
+
+// ── READING ───────────────────────────────────────────────
+const GL={atemberaubend:{de:'atemberaubend',en:'breathtaking, staggering',note:'Wörtlich: „den Atem raubend". Oft für Geschwindigkeit oder Schönheit.'},fassade:{de:'die Fassade',en:'façade, front',note:'Übertragen: äußerer Schein, der die Realität verbirgt.'},ausgepraegt:{de:'ausgeprägt',en:'pronounced, marked, distinct',note:'Partizip II von „ausprägen": deutlich sichtbar oder stark entwickelt.'},leistungsimperativen:{de:'der Leistungsimperativ',en:'performance imperative',note:'Begriff von Byung-Chul Han: innerer Zwang, stets leistungsfähig sein zu müssen.'},verfehlt:{de:'verfehlt',en:'misguided, wrong-headed',note:'„Das wäre verfehlt" = das wäre falsch gedacht.'},undenkbar:{de:'undenkbar',en:'unthinkable, inconceivable',note:'Nicht vorstellbar. „Schlicht undenkbar" = completely impossible to imagine.'},einkommensschwach:{de:'einkommensschwach',en:'low-income',note:'Compound: Einkommen + schwach. Gegenteil: einkommensstark.'},eigentliche:{de:'eigentlich(e)',en:'actual, real, fundamental',note:'Zur Hervorhebung: „die eigentliche Frage" = the real underlying question.'},entfremdung:{de:'die Entfremdung',en:'alienation, estrangement',note:'Marxscher Begriff: Trennung des Menschen von seiner Arbeit/Gesellschaft.'},genuin:{de:'genuin',en:'genuinely, truly, inherently',note:'Formell: „genuin politisch" = fundamentally political.'}};
+function showGloss(k){const g=GL[k];if(!g)return;document.getElementById('glossaryContent').innerHTML='<div><div class="glossary-de">'+g.de+'</div><div class="glossary-en">'+g.en+'</div><div class="glossary-note">'+g.note+'</div></div>';autoCheckMission('read');}
+
+// ── AUDIO ─────────────────────────────────────────────────
+const AD=[
+  // B1 tracks
+  {level:'B1',title:'Meine Heimatstadt',meta:'Monolog · B1 · 1:30',duration:90,
+   transcript:[
+    {t:0,text:'Mein Name ist Anna und ich komme aus Freiburg. Freiburg liegt im Südwesten von Deutschland, nicht weit von der Schweiz und von Frankreich.'},
+    {t:18,text:'Es ist eine mittelgroße Stadt mit etwa 230.000 Einwohnern. Die Stadt ist bekannt für die Universität und für das gute Wetter.'},
+    {t:36,text:'In Freiburg gibt es viele Fahrräder. Fast alle Menschen fahren Fahrrad – zum Einkaufen, zur Arbeit und in der Freizeit.'},
+    {t:52,text:'Ich wohne seit fünf Jahren hier. Vorher habe ich in Hamburg gewohnt. Hamburg ist viel größer und liegt im Norden.'},
+    {t:70,text:'Was ich an Freiburg besonders mag? Die Altstadt ist sehr schön, es gibt viele Cafés und im Sommer kann man in den Schwarzwald fahren.'},
+   ],
+   questions:[
+    {q:'Wo liegt Freiburg?',opts:['Im Norden Deutschlands','Im Südwesten Deutschlands','In der Schweiz','In der Mitte Deutschlands'],ans:1},
+    {q:'Wofür ist Freiburg bekannt?',opts:['Für den Hafen','Für die Universität und das Wetter','Für die Industrie','Für das Oktoberfest'],ans:1},
+    {q:'Wie lange wohnt Anna schon in Freiburg?',opts:['Seit einem Jahr','Seit zwei Jahren','Seit fünf Jahren','Seit zehn Jahren'],ans:2},
+   ]},
+  {level:'B1',title:'Im Restaurant bestellen',meta:'Dialog · B1 · 1:45',duration:105,
+   transcript:[
+    {t:0,text:'Kellner: Guten Abend! Haben Sie schon gewählt?'},
+    {t:6,text:'Gast: Ja, ich nehme die Gemüsesuppe als Vorspeise und dann das Schnitzel mit Pommes, bitte.'},
+    {t:16,text:'Kellner: Und zu trinken?'},
+    {t:20,text:'Gast: Ein Glas Mineralwasser, bitte. Haben Sie auch alkoholfreies Bier?'},
+    {t:28,text:'Kellner: Ja, natürlich. Möchten Sie das auch?'},
+    {t:33,text:'Gast: Nein danke, nur das Wasser. Ach, eine Frage: Ist das Schnitzel sehr groß? Ich bin nicht so hungrig.'},
+    {t:44,text:'Kellner: Es ist eine normale Portion. Wenn Sie weniger möchten, haben wir auch eine Kinderportion.'},
+    {t:54,text:'Gast: Nein, das ist okay. Kann ich auch extra Salat dazu bestellen?'},
+    {t:62,text:'Kellner: Ja, der Beilagensalat kostet zwei Euro extra.'},
+    {t:68,text:'Gast: Gut, dann bitte mit Salat. Danke.'},
+   ],
+   questions:[
+    {q:'Was bestellt der Gast als Vorspeise?',opts:['Salat','Suppe','Brot','Käse'],ans:1},
+    {q:'Was möchte der Gast trinken?',opts:['Alkoholfreies Bier','Wein','Mineralwasser','Saft'],ans:2},
+    {q:'Was kostet der Beilagensalat extra?',opts:['Einen Euro','Zwei Euro','Drei Euro','Nichts'],ans:1},
+   ]},
+  {level:'B1',title:'Eine Wohnung suchen',meta:'Telefongespräch · B1 · 2:00',duration:120,
+   transcript:[
+    {t:0,text:'Vermieterin: Guten Tag, hier ist Schmidt.'},
+    {t:5,text:'Interessent: Guten Tag, mein Name ist Müller. Ich rufe wegen der Wohnung an, die Sie in der Zeitung inseriert haben.'},
+    {t:14,text:'Vermieterin: Ah ja! Die Zweizimmerwohnung in der Hauptstraße?'},
+    {t:19,text:'Interessent: Genau. Ist die Wohnung noch frei?'},
+    {t:23,text:'Vermieterin: Ja, die ist noch zu haben. Sie hat 65 Quadratmeter, eine Küche, ein Bad und einen kleinen Balkon.'},
+    {t:34,text:'Interessent: Wie hoch ist die Miete?'},
+    {t:38,text:'Vermieterin: 850 Euro kalt, also ohne Heizung und Wasser. Mit Nebenkosten sind es ungefähr 1050 Euro.'},
+    {t:49,text:'Interessent: Darf ich fragen, ab wann die Wohnung frei ist?'},
+    {t:55,text:'Vermieterin: Ab dem ersten Februar. Würden Sie sich die Wohnung gerne ansehen?'},
+    {t:62,text:'Interessent: Ja, sehr gerne! Wäre Samstag möglich?'},
+    {t:67,text:'Vermieterin: Samstag um 10 Uhr passt mir gut. Haben Sie die Adresse?'},
+   ],
+   questions:[
+    {q:'Wie viele Quadratmeter hat die Wohnung?',opts:['55','65','75','85'],ans:1},
+    {q:'Was kostet die Wohnung mit Nebenkosten?',opts:['850 Euro','950 Euro','1050 Euro','1150 Euro'],ans:2},
+    {q:'Ab wann ist die Wohnung frei?',opts:['Ab sofort','Ab dem ersten Januar','Ab dem ersten Februar','Ab dem ersten März'],ans:2},
+   ]},
+  // B2 tracks (original ones, now level-tagged)
+  {level:'B2',title:'Klimawandel und persönliche Verantwortung',meta:'Podcast · B2 · 2:15',duration:135,transcript:[{t:0,text:'Moderator: Willkommen. Wir sprechen über Klimawandel – kann jeder Einzelne wirklich etwas verändern?'},{t:18,text:'Gast: Einerseits sind es die großen Konzerne, die den größten CO₂-Ausstoß verursachen. Andererseits darf man den individuellen Beitrag nicht unterschätzen.'},{t:38,text:'Moderator: Fühlen sich nicht viele machtlos, wenn ihr Verzicht im großen Maßstab so wenig bewirkt?'},{t:54,text:'Gast: Das ist ein berechtigter Einwand. Psychologen nennen das „drop in the ocean". Trotzdem zeigen Studien, dass kollektives Verhalten Märkte beeinflusst.'},{t:78,text:'Moderator: Also: systemische Veränderungen und individuelles Handeln sind beide nötig?'},{t:90,text:'Gast: Genau. Die dichotome Debatte führt uns nicht weiter. Wir brauchen beides – gleichzeitig.'},{t:110,text:'Moderator: Fazit: Persönliche Verantwortung und politischer Druck schließen sich nicht aus.'}],questions:[{q:'Was nennen Psychologen das Gefühl, dass die eigene Handlung keine Wirkung hat?',opts:['"System failure"','"Drop in the ocean"','Kollektivscham','Handlungslähmung'],ans:1},{q:'Was ist laut dem Gast die richtige Perspektive?',opts:['Nur das Individuum ist verantwortlich.','Nur systemische Veränderungen helfen.','Beides ist notwendig.','Verzicht bringt nichts.'],ans:2},{q:'Was beeinflusst kollektives Verhalten laut dem Gast?',opts:['Nichts wesentliches','Gesetze allein','Märkte','Nur große Konzerne'],ans:2}]},
+  {level:'C1',title:'Künstliche Intelligenz in der Medizin',meta:'Radio-Feature · C1 · 3:00',duration:180,transcript:[{t:0,text:'Sprecher: Ein Algorithmus erkennt einen Tumor auf einem Röntgenbild, bevor ein Arzt hinschaut. In einigen Ländern ist das bereits Realität.'},{t:20,text:'Diagnostik erfordert Erfahrung, Mustererkennung und Konzentration – genau das sind Stärken moderner KI-Systeme.'},{t:42,text:'Doch mit diesen Möglichkeiten gehen erhebliche Risiken einher. Wer haftet, wenn KI eine Fehldiagnose stellt?'},{t:62,text:'KI-Modelle sind nur so gut wie ihre Trainingsdaten. Wenn bestimmte Gruppen unterrepräsentiert sind, werden Diagnosen verzerrt.'},{t:88,text:'Die Mehrheit der Mediziner ist vorsichtig optimistisch. KI solle Werkzeug sein, kein Ersatz für ärztliches Urteilsvermögen.'},{t:112,text:'Die eigentliche Herausforderung liegt in Regulierung, Datenschutz und ethischem Umgang mit Algorithmen.'},{t:140,text:'KI in der Medizin – Chance und Verantwortung zugleich. Die Diskussion steht erst am Anfang.'}],questions:[{q:'Was ist laut dem Beitrag eine Hauptstärke moderner KI?',opts:['Empathie','Mustererkennung und Konzentration','Kostengünstigkeit','Rechtliche Absicherung'],ans:1},{q:'Was passiert wenn Trainingsdaten Gruppen unterrepräsentieren?',opts:['KI wird langsamer','Diagnosen können verzerrt sein','Das Modell stoppt','Ärzte müssen mehr arbeiten'],ans:1},{q:'Wie sehen Mediziner laut dem Beitrag die KI?',opts:['Als vollständigen Ersatz','Als unnütze Technologie','Als Werkzeug, nicht als Ersatz','Als Hauptproblem'],ans:2},{q:'Wo liegt die „eigentliche Herausforderung"?',opts:['In der Entwicklung der Algorithmen','In der Finanzierung','In Regulierung, Datenschutz und Ethik','Im Widerstand der Ärzte'],ans:2}]},
+  {level:'B2',title:'Wohnen in der Großstadt',meta:'Interview · B2 · 2:40',duration:160,transcript:[{t:0,text:'Journalistin: Frau Brandt, Mieten steigen seit Jahren – ist das noch aufzuhalten?'},{t:14,text:'Brandt: Aufhalten nicht mehr – aber abfedern schon. Zu wenig Neubau, zu viele Investoren, die Wohnraum als Spekulationsobjekt betrachten.'},{t:32,text:'Journalistin: Stichwort Gentrifizierung – viele können sich ihre angestammten Viertel nicht mehr leisten.'},{t:44,text:'Brandt: Ja, und das hat Folgen für das soziale Gefüge. Wenn Erzieherinnen und Pflegepersonal verdrängt werden, leidet die gesamte Infrastruktur.'},{t:64,text:'Journalistin: Was wären Lösungsansätze?'},{t:70,text:'Brandt: Mehr sozialer Wohnungsbau. Kommunen müssen das Vorkaufsrecht konsequenter nutzen. Und Leerstand muss teurer werden als Vermietung.'},{t:98,text:'Brandt: Es ist radikal – aber die Situation ist es auch. Wohnen ist ein Grundrecht, kein Luxusgut.'}],questions:[{q:'Was nennt Brandt als Hauptproblem der steigenden Mieten?',opts:['Zu viele Mieter','Investoren, die Wohnraum spekulativ nutzen','Zu hohe Baukosten','Mangelndes Stadtbewusstsein'],ans:1},{q:'Was leidet wenn Pflegepersonal verdrängt wird?',opts:['Die Kulturszene','Das Stadtbild','Die gesamte Infrastruktur','Der Tourismus'],ans:2},{q:'Welche Maßnahme nennt Brandt NICHT?',opts:['Mehr sozialer Wohnungsbau','Kommunales Vorkaufsrecht','Leerstand teurer machen','Bundesweite Mietpreisbremse'],ans:3}]},
+  {level:'C1',title:'Sprachliche Relativität: Denken wir in Sprachen?',meta:'Vortrag · C1 · 3:30',duration:210,transcript:[{t:0,text:'Professorin: Die Sapir-Whorf-Hypothese besagt, dass die Sprache, die wir sprechen, unser Denken beeinflusst – oder sogar determiniert.'},{t:22,text:'In ihrer starken Form – dem linguistischen Determinismus – könnten wir nur das denken, wofür unsere Sprache Begriffe hat. Das gilt als weitgehend widerlegt.'},{t:42,text:'Die schwache Form, der linguistische Relativismus, ist empirisch gut belegt. Sprache beeinflusst Wahrnehmung und Gedächtnisleistungen.'},{t:64,text:'Das Russische unterscheidet zwischen hellem und dunklem Blau – „goluboy" und „siniy". Russische Muttersprachler erkennen diese Unterschiede schneller.'},{t:96,text:'In manchen Sprachen gibt es keine relativen Begriffe wie „links" und „rechts", sondern nur Himmelsrichtungen. Sprecher haben ein außergewöhnliches Orientierungsvermögen.'},{t:126,text:'Mehrsprachigkeit trainiert kognitive Flexibilität. Und: Sprache ist kein neutrales Werkzeug – sie formt mit, wie wir die Welt sehen.'},{t:152,text:'Abschließend: Das ist keine Einbahnstraße. Denken beeinflusst auch Sprache. Der Zusammenhang ist bidirektional und dynamisch.'}],questions:[{q:'Was besagt der linguistische Determinismus?',opts:['Sprache ist neutral','Wir können nur denken, wofür wir Begriffe haben','Mehrsprachigkeit verbessert Denken','Alle Sprachen sind gleich'],ans:1},{q:'Was ist empirisch gut belegt?',opts:['Linguistischer Determinismus','Dass Russisch das beste Farbsystem hat','Linguistischer Relativismus','Dass Sprache Denken nicht beeinflusst'],ans:2},{q:'Was können russische Muttersprachler laut dem Beispiel besser?',opts:['Mathematik lösen','Hell- und Dunkelblau schneller unterscheiden','Himmelsrichtungen nutzen','Mehrere Sprachen lernen'],ans:1},{q:'Wie ist der Zusammenhang zwischen Sprache und Denken?',opts:['Einseitig: Sprache→Denken','Einseitig: Denken→Sprache','Bidirektional und dynamisch','Nicht existent'],ans:2}]},
+  {level:'C1',title:'Philosophie des Zufalls',meta:'Vortrag · C1 · 3:15',duration:195,transcript:[{t:0,text:'Was ist Zufall? Im Alltag meinen wir damit Ereignisse, die unvorhersehbar sind und die wir nicht kontrollieren können.'},{t:20,text:'Philosophen und Physiker streiten seit Jahrhunderten darüber, ob echter Zufall existiert – oder ob das Universum vollständig deterministisch ist.'},{t:42,text:'Der Determinismus besagt: alle Ereignisse sind durch vorherige Zustände und Naturgesetze vollständig bestimmt. Was auch immer passiert, war unvermeidbar.'},{t:64,text:'Die Quantenmechanik jedoch impliziert echten Zufall. Der Zerfall eines radioaktiven Atoms ist selbst im Prinzip nicht vorhersagbar.'},{t:88,text:'Einstein wollte das nicht akzeptieren. „Gott würfelt nicht", sagte er – er glaubte an noch unbekannte verborgene Variablen.'},{t:110,text:'Die Mehrheit der Physiker hält Zufall heute für fundamental. Aber was bedeutet das für Freiheit und Verantwortung?'},{t:135,text:'Wenn alles zufällig oder alles determiniert ist – wo bleibt der freie Wille? Das ist eine Frage, die Philosophie, Physik und Rechtswissenschaft gleichermaßen betrifft.'}],questions:[{q:'Was besagt der Determinismus?',opts:['Alles ist zufällig','Alle Ereignisse sind durch Naturgesetze vollständig bestimmt','Quantenmechanik beweist Freiheit','Einstein hatte Recht'],ans:1},{q:'Warum zweifelte Einstein an der Quantenmechanik?',opts:['Er verstand sie nicht','Er wollte echten Zufall nicht akzeptieren','Er hatte keine eigene Theorie','Er glaubte nicht an Atome'],ans:1},{q:'Was impliziert echter Zufall für Philosophie und Recht?',opts:['Gar nichts','Nur Physiker sind betroffen','Es berührt Fragen von Freiheit und Verantwortung','Es vereinfacht alles'],ans:2},{q:'Welches Beispiel für fundamentalen Zufall wird genannt?',opts:['Der Würfelwurf','Wettervorhersage','Radioaktiver Zerfall','Gravitationswellen'],ans:2}]},
+  {level:'C1',title:'Sprache und Macht',meta:'Podcast · C1 · 3:00',duration:180,transcript:[{t:0,text:'Sprache ist nie neutral. Jedes Wort transportiert Annahmen, Weltbilder und Machtverhältnisse – oft ohne dass wir es bemerken.'},{t:18,text:'Die Linguistin Ruth Wodak hat gezeigt, wie politische Reden bestimmte Gruppen durch subtile sprachliche Mittel systematisch ausschließen oder abwerten.'},{t:38,text:'Beispiel: „Asylbewerber überfluten die Stadt" – Menschen werden durch eine Naturmetapher entmenschlicht. Das beeinflusst Wahrnehmung und Politik.'},{t:58,text:'Das ist das Konzept der kritischen Diskursanalyse: Sie untersucht, wie Texte gesellschaftliche Realitäten konstruieren, legitimieren oder hinterfragen.'},{t:80,text:'Sprache verändert sich durch Machtprozesse. Welche Wörter in Medien erscheinen, welche Themen als wichtig gelten – das ist keine neutrale Auswahl.'},{t:100,text:'Gleichzeitig ist Sprache ein Werkzeug des Widerstands. Neue Begriffe wie „Klimakrise" statt „Klimawandel" sind politische Entscheidungen.'},{t:122,text:'Fazit: Wer die Sprache kontrolliert, beeinflusst die Gedanken. Bewusstsein für sprachliche Machtverhältnisse ist daher ein demokratisches Instrument.'}],questions:[{q:'Was transportiert Sprache laut dem Beitrag?',opts:['Nur Fakten','Annahmen, Weltbilder und Machtverhältnisse','Nur Emotionen','Objektive Wahrheit'],ans:1},{q:'Was untersucht kritische Diskursanalyse?',opts:['Grammatikfehler in Texten','Wie Texte gesellschaftliche Realitäten konstruieren','Rechtschreibung in der Presse','Übersetzungsmethoden'],ans:1},{q:'Welches Beispiel für entmenschlichende Sprache wird genannt?',opts:['"Bürger protestieren"','"Asylbewerber überfluten die Stadt"','"Politiker streiten"','"Preise steigen"'],ans:1},{q:'Warum ist „Klimakrise" statt „Klimawandel" eine politische Entscheidung?',opts:['Es ist ein Anglizismus','Es ist kürzer','Es betont Dringlichkeit und ist eine bewusste Rahmung','Es ist wissenschaftlich exakter'],ans:2}]}
+];
+let curAudio=null,aTimer=null,aPos=0,aPlay=false,aSpeed=1,compAns={},compDone=false;
+function loadAudio(i){document.querySelectorAll('.audio-card').forEach((c,j)=>c.classList.toggle('active-track',j===i));curAudio=AD[i];aPos=0;aPlay=false;clearInterval(aTimer);document.getElementById('playerTitle').textContent=curAudio.title;document.getElementById('playerMeta').textContent=curAudio.meta;document.getElementById('timeDuration').textContent=fmt(curAudio.duration);document.getElementById('timeCurrent').textContent='0:00';document.getElementById('timelineFill').style.width='0%';document.getElementById('playBtn').textContent='▶';document.getElementById('audioPlayer').classList.add('visible');document.getElementById('transcriptBox').innerHTML=curAudio.transcript.map((s,j)=>'<span id="ts-'+j+'" class="'+(j===0?'t-active':'')+'">'+s.text+' </span>').join('');compAns={};compDone=false;document.getElementById('compQuestions').innerHTML=curAudio.questions.map((q,qi)=>'<div class="comp-question"><div class="comp-q-text">'+(qi+1)+'. '+q.q+'</div><div class="comp-options">'+q.opts.map((o,oi)=>'<button class="comp-opt" id="cq'+qi+'-'+oi+'" onclick="selComp('+qi+','+oi+')">'+o+'</button>').join('')+'</div></div>').join('');document.getElementById('compSubmitBtn').style.display='block';document.getElementById('compSubmitBtn').disabled=false;document.getElementById('compSection').style.display='block';autoCheckMission('hoer');setTimeout(()=>document.getElementById('compSection').scrollIntoView({behavior:'smooth',block:'nearest'}),400);}
+function togglePlay(){if(!curAudio)return;if(aPlay){aPlay=false;clearInterval(aTimer);document.getElementById('playBtn').textContent='▶';}else{aPlay=true;document.getElementById('playBtn').textContent='⏸';aTimer=setInterval(()=>{aPos+=0.2*aSpeed;if(aPos>=curAudio.duration){aPos=curAudio.duration;aPlay=false;clearInterval(aTimer);document.getElementById('playBtn').textContent='▶';}updAudio();},200);}}
+function updAudio(){const p=(aPos/curAudio.duration)*100;document.getElementById('timelineFill').style.width=p+'%';document.getElementById('timeCurrent').textContent=fmt(aPos);let ai=0;curAudio.transcript.forEach((s,i)=>{if(aPos>=s.t)ai=i;});document.querySelectorAll('#transcriptBox span').forEach((s,i)=>s.classList.toggle('t-active',i===ai));const el=document.getElementById('ts-'+ai);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function seekAudio(e){if(!curAudio)return;aPos=(e.offsetX/e.currentTarget.offsetWidth)*curAudio.duration;updAudio();}
+function setSpeed(s,b){aSpeed=s;document.querySelectorAll('.speed-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+function selComp(qi,oi){if(compDone)return;compAns[qi]=oi;curAudio.questions[qi].opts.forEach((_,k)=>{const b=document.getElementById('cq'+qi+'-'+k);if(b){b.style.borderColor='';b.style.background='';}});const b=document.getElementById('cq'+qi+'-'+oi);if(b){b.style.borderColor='var(--ink)';b.style.background='rgba(26,26,46,0.04)';}}
+function submitComp(){if(!curAudio)return;compDone=true;let ok=0;curAudio.questions.forEach((q,qi)=>{const ch=compAns[qi]??-1;q.opts.forEach((_,oi)=>{const b=document.getElementById('cq'+qi+'-'+oi);if(!b)return;b.disabled=true;if(oi===q.ans)b.classList.add('correct');else if(oi===ch)b.classList.add('wrong');});if(ch===q.ans)ok++;});const pct=Math.round((ok/curAudio.questions.length)*100);document.getElementById('compSubmitBtn').style.display='none';if(pct>=60){S.audioCompleted++;awardXP(15,'Hörtest bestanden!');launchConfetti();updateUI();}else showToast(0,ok+'/'+curAudio.questions.length+' – Nochmal versuchen!');}
+
+// ── AUDIO GRID RENDER ─────────────────────────────────────────────
+function renderAudioGrid(){
+  const lvl=document.getElementById('audioLevelFilter')?.value||'all';
+  const filtered=AD.filter(t=>lvl==='all'||t.level===lvl);
+  const grid=document.getElementById('audioGrid');if(!grid)return;
+  const diffClass=l=>l==='B1'?'b1':l==='B2'?'b2':'c1';
+  grid.innerHTML=filtered.map((t,i)=>{
+    const realIdx=AD.indexOf(t);
+    const qCount=t.questions?.length||0;
+    const dur=Math.floor(t.duration/60)+':'+(t.duration%60).toString().padStart(2,'0');
+    return`<div class="audio-card" onclick="loadAudio(${realIdx})">
+      <div class="audio-card-top"><span class="audio-tag">${t.meta.split('·')[0].trim()}</span><span class="audio-diff ${diffClass(t.level)}">${t.level}</span></div>
+      <div class="audio-title">${t.title}</div>
+      <div class="audio-desc">${t.transcript[1]?.text.slice(0,80)||''}…</div>
+      <div class="audio-meta">⏱ ${dur} · ${qCount} Fragen</div>
+    </div>`;
+  }).join('');
+}
+
+// ── AUSSPRACHE ─────────────────────────────────────────────────────
+const PRON_CHIPS=['ü','ö','ä','ch','sch','ei','eu/äu','sp/st','v','z','au'];
+function initPronChips(){
+  const el=document.getElementById('pronChips');if(!el)return;
+  el.innerHTML=PRON_CHIPS.map(c=>`<button onclick="setPronChip('${c}')" style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.25rem 0.55rem;border:1px solid var(--border);background:var(--cream);cursor:pointer;color:var(--ink);transition:all 0.15s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">${c}</button>`).join('');
+}
+function setPronChip(c){document.getElementById('pronInput').value=c;checkPron();}
+function quickPron(el){document.getElementById('pronInput').value=el.dataset.word;checkPron();document.getElementById('pronInput').scrollIntoView({behavior:'smooth',block:'nearest'});}
+async function checkPron(){
+  const word=document.getElementById('pronInput').value.trim();if(!word)return;
+  document.getElementById('pronResult').style.display='none';
+  document.getElementById('pronLoading').style.display='block';
+  const sp=`Du bist ein Aussprachecoach für Deutschlernende. Wenn der Nutzer ein Wort oder einen Satz eingibt, antworte IMMER auf Englisch mit:
+1. **IPA transcription** in square brackets
+2. **Syllable breakdown** with stressed syllable in CAPS
+3. **Sound-by-sound guide** for non-native speakers (2-4 bullet points focusing on the hardest sounds)
+4. **Common mistake** one sentence about what learners typically get wrong
+5. **Tip** one practical tip
+
+Keep it concise. Use simple language. Format with clear sections.`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:sp,messages:[{role:'user',content:word}]})});
+    const d=await r.json();
+    const text=d.content?.[0]?.text||'Error.';
+    document.getElementById('pronLoading').style.display='none';
+    document.getElementById('pronResult').style.display='block';
+    document.getElementById('pronResult').innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>').replace(/\u2022 /g,'<span style="color:var(--gold)">\u2022</span> ');
+    autoCheckMission('grammar');autoCheckMission('aussprache');
+  }catch(e){
+    document.getElementById('pronLoading').style.display='none';
+    document.getElementById('pronResult').style.display='block';
+    document.getElementById('pronResult').textContent='Connection error. Please try again.';
+  }
+}
+
+// ── KORREKTUR ──────────────────────────────────────────────────────
+const KORR_EXAMPLES=[
+  'Ich bin 25 Jahre alt und lebe in München seit drei Jahren.',
+  'Gestern ich habe gegessen ein großes Pizza mit meine Freunde.',
+  'Obwohl das Wetter war schlecht, wir sind gegangen spazieren.',
+  'Er hat mir gesagt dass er kommt nicht morgen wegen er ist krank.',
+];
+function loadKorrExample(i){document.getElementById('korrInput').value=KORR_EXAMPLES[i];runKorrektur();}
+async function runKorrektur(){
+  const text=document.getElementById('korrInput').value.trim();if(!text)return;
+  const lvl=document.getElementById('korrLevel')?.value||'B2';
+  document.getElementById('korrEmpty').style.display='none';
+  document.getElementById('korrResult').style.display='none';
+  document.getElementById('korrLoading').style.display='block';
+  const sp=`Du bist ein präziser Deutschlehrer. Der Nutzer ist auf ${lvl}-Niveau. Korrigiere den folgenden deutschen Text und erkläre jeden Fehler auf Englisch.
+
+Format your response as follows:
+**Corrected text:**
+[Write the fully corrected text here]
+
+**Errors found:** (if none, write "No errors found! ✓")
+For each error, write:
+❌ Original: [the wrong part]
+✅ Corrected: [the correct version]
+📖 Rule (${lvl}): [brief grammar rule explanation in English, appropriate for ${lvl} level]
+
+Be thorough but kind. If the text has no errors, praise the learner specifically.`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sp,messages:[{role:'user',content:text}]})});
+    const d=await r.json();
+    const resp=d.content?.[0]?.text||'Error.';
+    document.getElementById('korrLoading').style.display='none';
+    document.getElementById('korrResult').style.display='block';
+    document.getElementById('korrResult').innerHTML=resp
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/❌/g,'<span style="color:var(--rust)">❌</span>')
+      .replace(/✅/g,'<span style="color:var(--sage)">✅</span>')
+      .replace(/📖/g,'<span style="color:var(--gold)">📖</span>')
+      .replace(/\n\n/g,'</p><p style="margin-top:0.75rem">')
+      .replace(/\n/g,'<br>');
+    awardXP(5,'Text korrigiert!');autoCheckMission('korrektur');
+  }catch(e){
+    document.getElementById('korrLoading').style.display='none';
+    document.getElementById('korrResult').style.display='block';
+    document.getElementById('korrResult').textContent='Connection error. Please try again.';
+  }
+}
+
+// ── CHAT ──────────────────────────────────────────────────
+const SP=`Du bist ein erfahrener Deutschlehrer für Lernende auf B1- bis C1-Niveau. Antworte immer auf Deutsch, passe aber dein Sprachniveau dem Lernenden an – wenn jemand einfaches Deutsch schreibt, antworte auf B1/B2-Niveau. Wenn der Nutzer Fehler macht, weise am Ende sanft darauf hin und zeige die korrekte Form. Biete niveaugerechte Alternativen für einfache Formulierungen an. Halte Antworten auf 3–5 Sätze, außer bei Erklärungen.`;
+let CH=[];
+function usePrompt(t){document.getElementById('chatIntro').style.display='none';document.getElementById('chatInput').value=t;sendChat();}
+async function sendChat(){const inp=document.getElementById('chatInput');const msg=inp.value.trim();if(!msg)return;inp.value='';document.getElementById('chatIntro').style.display='none';addMsg('user',msg);CH.push({role:'user',content:msg});S.chatMessages++;updateUI();if(S.chatMessages>=3)autoCheckMission('chat1');const te=document.createElement('div');te.className='msg';te.id='typing';te.innerHTML='<div class="msg-avatar">DM</div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';document.getElementById('chatMessages').appendChild(te);scrollC();try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SP,messages:CH})});const d=await r.json();const rep=d.content?.[0]?.text||'Entschuldigung, keine Antwort möglich.';CH.push({role:'assistant',content:rep});document.getElementById('typing')?.remove();addMsg('assistant',rep);}catch(e){document.getElementById('typing')?.remove();addMsg('assistant','Verbindungsfehler. Bitte erneut versuchen.');}}
+function addMsg(r,t){const w=document.createElement('div');w.className='msg'+(r==='user'?' user':'');w.innerHTML='<div class="msg-avatar">'+(r==='user'?'Du':'DM')+'</div><div class="msg-bubble">'+t.replace(/\n/g,'<br>')+'</div>';document.getElementById('chatMessages').appendChild(w);scrollC();}
+function scrollC(){const c=document.getElementById('chatMessages');c.scrollTop=c.scrollHeight;}
+
+// ── BACKUP / RESTORE ──────────────────────────────────────
+function exportData(){
+  const payload={
+    version:1,
+    exportedAt:new Date().toISOString(),
+    xp:S.xp,streak:S.streak,cardsReviewed:S.cardsReviewed,
+    cardsSeen:[...S.cardsSeen],quizScores:S.quizScores,
+    audioCompleted:S.audioCompleted,chatMessages:S.chatMessages,
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date().toISOString().slice(0,10);
+  a.href=url; a.download='deutschmeister-backup-'+date+'.json';
+  a.click(); URL.revokeObjectURL(url);
+  showToast(0,'Backup gespeichert!');
+}
+function resetAllData(){
+  if(!confirm('Wirklich alle Daten löschen? Das kann nicht rückgängig gemacht werden.'))return;
+  localStorage.removeItem('dm_save');
+  S.xp=0;S.streak=1;S.cardsReviewed=0;S.cardsSeen=new Set();
+  S.quizScores=[];S.audioCompleted=0;S.chatMessages=0;
+  S.missionsDone=new Set();S.sessionXP=0;
+  buildMissions();renderMissions();updateUI();
+  showToast(0,'Alle Daten zurückgesetzt.');
+  updateAutosaveStatus();
+}
+function importData(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!d.version||d.version!==1)throw new Error('Ungültiges Format');
+      S.xp=d.xp||0;
+      S.streak=d.streak||1;
+      S.cardsReviewed=d.cardsReviewed||0;
+      S.cardsSeen=new Set(d.cardsSeen||[]);
+      S.quizScores=d.quizScores||[];
+      S.audioCompleted=d.audioCompleted||0;
+      S.chatMessages=d.chatMessages||0;
+      updateUI(); renderMissions();
+      const msg=document.getElementById('importMsg');
+      msg.style.display='block';
+      msg.style.borderColor='var(--sage)';
+      msg.style.background='rgba(74,124,89,0.06)';
+      msg.textContent='✓ Backup erfolgreich geladen! (exportiert am '+new Date(d.exportedAt).toLocaleDateString('de-DE')+')';
+      showToast(0,'Backup geladen!');
+    }catch(err){
+      const msg=document.getElementById('importMsg');
+      msg.style.display='block';
+      msg.style.borderColor='var(--rust)';
+      msg.style.background='rgba(181,69,27,0.05)';
+      msg.textContent='✗ Fehler: Ungültige Backup-Datei.';
+    }
+  };
+  reader.readAsText(file);
+  e.target.value=''; // allow re-import of same file
+}
+
+// ── AUTO-SAVE ─────────────────────────────────────────────
+function saveState(){
+  try{
+    localStorage.setItem('dm_save',JSON.stringify({
+      version:1,exportedAt:new Date().toISOString(),
+      xp:S.xp,streak:S.streak,cardsReviewed:S.cardsReviewed,
+      cardsSeen:[...S.cardsSeen],quizScores:S.quizScores,
+      audioCompleted:S.audioCompleted,chatMessages:S.chatMessages,
+      missionsDoneToday:[...S.missionsDone],
+      missionsSavedDate:new Date().toDateString()
+    }));
+    updateAutosaveStatus();
+  }catch(e){}
+}
+function updateAutosaveStatus(){
+  const el=document.getElementById('autosaveStatus'); if(!el)return;
+  const raw=localStorage.getItem('dm_save');
+  if(!raw){el.textContent='';return;}
+  try{
+    const d=JSON.parse(raw);
+    const when=new Date(d.exportedAt);
+    el.textContent='✓ Automatisch gespeichert · zuletzt '+when.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' Uhr';
+  }catch(e){el.textContent='';}
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem('dm_save'); if(!raw)return;
+    const d=JSON.parse(raw);
+    S.xp=d.xp||0; S.streak=d.streak||1;
+    S.cardsReviewed=d.cardsReviewed||0;
+    S.cardsSeen=new Set(d.cardsSeen||[]);
+    S.quizScores=d.quizScores||[];
+    S.audioCompleted=d.audioCompleted||0;
+    S.chatMessages=d.chatMessages||0;
+    // restore today's missions only if saved today
+    if(d.missionsSavedDate===new Date().toDateString()){
+      S.missionsDone=new Set(d.missionsDoneToday||[]);
+    }
+  }catch(e){}
+}
+
+// ── INIT ──────────────────────────────────────────────────
+loadState();
+buildMissions();
+renderAudioGrid();
+initPronChips();
+renderMissions();
+resetVocab();
+startQuiz();
+updateUI();
+updateAutosaveStatus();
+document.getElementById('missionDate').textContent=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
+</script>
+</body>
+</html>
